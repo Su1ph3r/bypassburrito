@@ -1,0 +1,509 @@
+version: "2.0"
+last_updated: "2025-01-19"
+
+signatures:
+  cloudflare:
+    name: "Cloudflare WAF"
+    vendor: "Cloudflare Inc."
+    detection:
+      headers:
+        - pattern: "(?i)cf-ray"
+          weight: 0.4
+          description: "Cloudflare Ray ID header"
+        - pattern: "(?i)cf-cache-status"
+          weight: 0.2
+          description: "Cloudflare cache status"
+        - pattern: "(?i)cf-request-id"
+          weight: 0.3
+          description: "Cloudflare request ID"
+        - pattern: "(?i)server:\\s*cloudflare"
+          weight: 0.5
+          description: "Server header indicates Cloudflare"
+      body:
+        - pattern: "(?i)attention required.*cloudflare"
+          weight: 0.5
+          description: "Cloudflare attention required page"
+        - pattern: "(?i)ray id:"
+          weight: 0.4
+          description: "Ray ID in response body"
+        - pattern: "(?i)cloudflare"
+          weight: 0.2
+          description: "Cloudflare mentioned in body"
+        - pattern: "(?i)error 1020"
+          weight: 0.5
+          description: "Cloudflare error 1020 (access denied)"
+        - pattern: "(?i)blocked by cloudflare"
+          weight: 0.6
+          description: "Explicit block message"
+        - pattern: "(?i)why have i been blocked"
+          weight: 0.5
+          description: "Cloudflare block explanation page"
+      cookies:
+        - pattern: "__cfduid"
+          weight: 0.3
+        - pattern: "__cf_bm"
+          weight: 0.4
+        - pattern: "cf_clearance"
+          weight: 0.5
+      status_codes: [403, 503, 1020]
+    block_indicators:
+      - "Ray ID"
+      - "Error 1020"
+      - "Access denied"
+      - "Cloudflare to restrict access"
+    known_bypasses:
+      - "Unicode normalization"
+      - "Double URL encoding"
+      - "HTTP parameter pollution"
+      - "Overlong UTF-8 encoding"
+
+  modsecurity:
+    name: "ModSecurity"
+    vendor: "Trustwave SpiderLabs"
+    detection:
+      headers:
+        - pattern: "(?i)mod_security"
+          weight: 0.5
+          description: "ModSecurity mentioned in headers"
+        - pattern: "(?i)NOYB"
+          weight: 0.3
+          description: "ModSecurity NOYB marker"
+        - pattern: "(?i)Sec-"
+          weight: 0.1
+          description: "Security headers (low confidence)"
+      body:
+        - pattern: "(?i)mod_security"
+          weight: 0.5
+          description: "ModSecurity in body"
+        - pattern: "(?i)not acceptable"
+          weight: 0.3
+          description: "Not acceptable message"
+        - pattern: "(?i)request forbidden"
+          weight: 0.4
+          description: "Forbidden message"
+        - pattern: "(?i)unique id:"
+          weight: 0.4
+          description: "ModSecurity unique ID"
+      status_codes: [403, 406, 501]
+    rulesets:
+      owasp_crs:
+        detection_patterns:
+          - pattern: 'id "9\d{5}"'
+            description: "OWASP CRS rule ID format"
+          - pattern: "ModSecurity: Access denied"
+            description: "Standard block message"
+        paranoia_levels:
+          1: "Basic protection"
+          2: "Elevated protection"
+          3: "High protection"
+          4: "Maximum protection (many false positives)"
+    block_indicators:
+      - "ModSecurity"
+      - "Access denied"
+      - "Not Acceptable"
+    known_bypasses:
+      - "Comment injection (/**/)"
+      - "Case variation"
+      - "Null byte injection"
+      - "HTTP verb tampering"
+      - "Chunked transfer encoding"
+
+  aws_waf:
+    name: "AWS WAF"
+    vendor: "Amazon Web Services"
+    detection:
+      headers:
+        - pattern: "(?i)x-amzn-requestid"
+          weight: 0.3
+          description: "AWS request ID"
+        - pattern: "(?i)x-amz-cf-id"
+          weight: 0.3
+          description: "CloudFront ID"
+        - pattern: "(?i)x-amz-cf-pop"
+          weight: 0.2
+          description: "CloudFront POP"
+        - pattern: "(?i)x-amz-apigw-id"
+          weight: 0.3
+          description: "API Gateway ID"
+      body:
+        - pattern: "(?i)request blocked"
+          weight: 0.4
+          description: "Generic block message"
+        - pattern: "(?i)aws waf"
+          weight: 0.5
+          description: "AWS WAF mentioned"
+        - pattern: "(?i)access denied"
+          weight: 0.2
+          description: "Access denied"
+      status_codes: [403]
+    block_indicators:
+      - "Request blocked"
+      - "AWS WAF"
+    known_bypasses:
+      - "Unicode encoding"
+      - "Parameter pollution"
+      - "Content-Type manipulation"
+      - "Case randomization"
+
+  akamai:
+    name: "Akamai Kona Site Defender"
+    vendor: "Akamai Technologies"
+    detection:
+      headers:
+        - pattern: "(?i)akamai"
+          weight: 0.5
+          description: "Akamai in headers"
+        - pattern: "(?i)x-akamai-"
+          weight: 0.4
+          description: "Akamai specific headers"
+        - pattern: "(?i)akamaighost"
+          weight: 0.5
+          description: "AkamaiGHost server"
+      body:
+        - pattern: "(?i)access denied"
+          weight: 0.3
+          description: "Access denied"
+        - pattern: "(?i)reference #"
+          weight: 0.4
+          description: "Reference number in block page"
+        - pattern: "(?i)akamai"
+          weight: 0.3
+          description: "Akamai mentioned"
+      status_codes: [403]
+    block_indicators:
+      - "Reference #"
+      - "Access Denied"
+    known_bypasses:
+      - "URL encoding variations"
+      - "HTTP method override"
+      - "Header injection"
+
+  imperva:
+    name: "Imperva SecureSphere / Incapsula"
+    vendor: "Imperva"
+    detection:
+      headers:
+        - pattern: "(?i)x-iinfo"
+          weight: 0.5
+          description: "Imperva info header"
+        - pattern: "(?i)x-cdn"
+          weight: 0.2
+          description: "CDN header"
+      body:
+        - pattern: "(?i)incapsula"
+          weight: 0.5
+          description: "Incapsula mentioned"
+        - pattern: "(?i)imperva"
+          weight: 0.5
+          description: "Imperva mentioned"
+        - pattern: "(?i)request unsuccessful"
+          weight: 0.4
+          description: "Request unsuccessful"
+        - pattern: "(?i)incident id"
+          weight: 0.4
+          description: "Incident ID in response"
+      cookies:
+        - pattern: "incap_ses_"
+          weight: 0.5
+        - pattern: "visid_incap_"
+          weight: 0.5
+        - pattern: "nlbi_"
+          weight: 0.4
+      status_codes: [403]
+    block_indicators:
+      - "Incapsula"
+      - "Incident ID"
+      - "Request unsuccessful"
+    known_bypasses:
+      - "Unicode normalization"
+      - "Double encoding"
+      - "Whitespace manipulation"
+
+  f5_bigip:
+    name: "F5 BIG-IP ASM"
+    vendor: "F5 Networks"
+    detection:
+      headers:
+        - pattern: "(?i)x-waf-"
+          weight: 0.4
+          description: "WAF headers"
+        - pattern: "(?i)bigip"
+          weight: 0.5
+          description: "BIG-IP mentioned"
+        - pattern: "(?i)f5"
+          weight: 0.3
+          description: "F5 mentioned"
+      body:
+        - pattern: "(?i)request rejected"
+          weight: 0.4
+          description: "Request rejected"
+        - pattern: "(?i)support id"
+          weight: 0.5
+          description: "Support ID in response"
+        - pattern: "(?i)the requested url was rejected"
+          weight: 0.5
+          description: "URL rejection message"
+      cookies:
+        - pattern: "TS[a-zA-Z0-9]+"
+          weight: 0.3
+        - pattern: "BIGipServer"
+          weight: 0.5
+      status_codes: [403, 501]
+    block_indicators:
+      - "Request Rejected"
+      - "Support ID"
+      - "The requested URL was rejected"
+    known_bypasses:
+      - "Comment insertion"
+      - "Case manipulation"
+      - "Parameter pollution"
+
+  sucuri:
+    name: "Sucuri WAF"
+    vendor: "Sucuri/GoDaddy"
+    detection:
+      headers:
+        - pattern: "(?i)x-sucuri-"
+          weight: 0.5
+          description: "Sucuri headers"
+        - pattern: "(?i)sucuri"
+          weight: 0.4
+          description: "Sucuri in headers"
+      body:
+        - pattern: "(?i)sucuri"
+          weight: 0.4
+          description: "Sucuri mentioned"
+        - pattern: "(?i)cloudproxy"
+          weight: 0.4
+          description: "CloudProxy mentioned"
+        - pattern: "(?i)blocked by sucuri"
+          weight: 0.6
+          description: "Explicit block message"
+        - pattern: "(?i)access denied.*sucuri"
+          weight: 0.5
+          description: "Access denied by Sucuri"
+      status_codes: [403]
+    block_indicators:
+      - "Sucuri"
+      - "CloudProxy"
+      - "Blocked by Sucuri"
+    known_bypasses:
+      - "URL encoding"
+      - "Unicode characters"
+      - "Alternative syntax"
+
+  wordfence:
+    name: "Wordfence"
+    vendor: "Defiant Inc."
+    detection:
+      body:
+        - pattern: "(?i)wordfence"
+          weight: 0.5
+          description: "Wordfence mentioned"
+        - pattern: "(?i)generated by wordfence"
+          weight: 0.6
+          description: "Generated by Wordfence"
+        - pattern: "(?i)blocked by wordfence"
+          weight: 0.6
+          description: "Blocked by Wordfence"
+        - pattern: "(?i)a potentially unsafe operation"
+          weight: 0.4
+          description: "Unsafe operation message"
+      status_codes: [403, 503]
+    block_indicators:
+      - "Wordfence"
+      - "Generated by Wordfence"
+      - "potentially unsafe operation"
+    known_bypasses:
+      - "IP rotation"
+      - "Header manipulation"
+      - "Parameter encoding"
+
+  fortinet:
+    name: "Fortinet FortiWeb"
+    vendor: "Fortinet"
+    detection:
+      headers:
+        - pattern: "(?i)fortigate"
+          weight: 0.5
+          description: "FortiGate mentioned"
+        - pattern: "(?i)fortiweb"
+          weight: 0.5
+          description: "FortiWeb mentioned"
+      body:
+        - pattern: "(?i)fortigate"
+          weight: 0.4
+          description: "FortiGate in body"
+        - pattern: "(?i)fortiweb"
+          weight: 0.4
+          description: "FortiWeb in body"
+        - pattern: "(?i)attack signature"
+          weight: 0.4
+          description: "Attack signature detected"
+      status_codes: [403]
+    block_indicators:
+      - "FortiGate"
+      - "FortiWeb"
+      - "Attack signature"
+    known_bypasses:
+      - "Encoding variations"
+      - "HTTP method tampering"
+      - "Content chunking"
+
+  barracuda:
+    name: "Barracuda WAF"
+    vendor: "Barracuda Networks"
+    detection:
+      headers:
+        - pattern: "(?i)barracuda"
+          weight: 0.5
+          description: "Barracuda mentioned"
+      body:
+        - pattern: "(?i)barracuda"
+          weight: 0.4
+          description: "Barracuda in body"
+        - pattern: "(?i)barra"
+          weight: 0.3
+          description: "Barra prefix"
+      cookies:
+        - pattern: "barra_"
+          weight: 0.4
+      status_codes: [403]
+    block_indicators:
+      - "Barracuda"
+    known_bypasses:
+      - "URL encoding"
+      - "Case manipulation"
+
+  citrix:
+    name: "Citrix ADC / NetScaler"
+    vendor: "Citrix Systems"
+    detection:
+      headers:
+        - pattern: "(?i)citrix"
+          weight: 0.5
+          description: "Citrix mentioned"
+        - pattern: "(?i)netscaler"
+          weight: 0.5
+          description: "NetScaler mentioned"
+        - pattern: "(?i)ns_af"
+          weight: 0.4
+          description: "NetScaler AF cookie"
+      body:
+        - pattern: "(?i)citrix"
+          weight: 0.4
+          description: "Citrix in body"
+        - pattern: "(?i)application firewall"
+          weight: 0.4
+          description: "Application firewall mentioned"
+      cookies:
+        - pattern: "ns_af"
+          weight: 0.5
+        - pattern: "citrix"
+          weight: 0.4
+      status_codes: [403]
+    block_indicators:
+      - "Citrix"
+      - "NetScaler"
+      - "Application Firewall"
+    known_bypasses:
+      - "Parameter manipulation"
+      - "Encoding bypass"
+
+  radware:
+    name: "Radware AppWall"
+    vendor: "Radware"
+    detection:
+      headers:
+        - pattern: "(?i)radware"
+          weight: 0.5
+          description: "Radware mentioned"
+        - pattern: "(?i)x-sl-"
+          weight: 0.3
+          description: "SecureLink headers"
+      body:
+        - pattern: "(?i)radware"
+          weight: 0.4
+          description: "Radware in body"
+        - pattern: "(?i)appwall"
+          weight: 0.4
+          description: "AppWall mentioned"
+      status_codes: [403]
+    block_indicators:
+      - "Radware"
+      - "AppWall"
+    known_bypasses:
+      - "Unicode encoding"
+      - "Chunked encoding"
+
+  palo_alto:
+    name: "Palo Alto Networks"
+    vendor: "Palo Alto Networks"
+    detection:
+      headers:
+        - pattern: "(?i)palo alto"
+          weight: 0.5
+          description: "Palo Alto mentioned"
+      body:
+        - pattern: "(?i)palo alto"
+          weight: 0.4
+          description: "Palo Alto in body"
+        - pattern: "(?i)blocked by url filtering"
+          weight: 0.5
+          description: "URL filtering block"
+      status_codes: [403]
+    block_indicators:
+      - "Palo Alto"
+      - "URL Filtering"
+    known_bypasses:
+      - "Alternative encoding"
+      - "Path manipulation"
+
+  webknight:
+    name: "WebKnight"
+    vendor: "AQTRONIX"
+    detection:
+      headers:
+        - pattern: "(?i)webknight"
+          weight: 0.5
+          description: "WebKnight mentioned"
+      body:
+        - pattern: "(?i)webknight"
+          weight: 0.5
+          description: "WebKnight in body"
+        - pattern: "(?i)aqtronix"
+          weight: 0.4
+          description: "AQTRONIX mentioned"
+      status_codes: [403]
+    block_indicators:
+      - "WebKnight"
+      - "AQTRONIX"
+    known_bypasses:
+      - "URL encoding"
+      - "Case manipulation"
+
+  denyall:
+    name: "DenyAll WAF"
+    vendor: "DenyAll"
+    detection:
+      headers:
+        - pattern: "(?i)denyall"
+          weight: 0.5
+          description: "DenyAll mentioned"
+        - pattern: "(?i)sessioncookie"
+          weight: 0.3
+          description: "DenyAll session cookie"
+      body:
+        - pattern: "(?i)denyall"
+          weight: 0.4
+          description: "DenyAll in body"
+        - pattern: "(?i)conditioned by"
+          weight: 0.4
+          description: "DenyAll condition message"
+      status_codes: [403]
+    block_indicators:
+      - "DenyAll"
+      - "Conditioned by"
+    known_bypasses:
+      - "Encoding bypass"
+      - "HTTP method manipulation"

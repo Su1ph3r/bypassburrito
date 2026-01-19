@@ -1,0 +1,47 @@
+# Embedded WAF Signatures for wafex
+# This file is embedded at compile time
+version: "1.0"
+last_updated: "2025-01-19"
+
+signatures:
+  cloudflare:
+    name: "Cloudflare WAF"
+    vendor: "Cloudflare Inc."
+    detection:
+      headers:
+        - pattern: "(?i)cf-ray"
+          weight: 0.4
+        - pattern: "(?i)server:\\s*cloudflare"
+          weight: 0.5
+      body:
+        - pattern: "(?i)cloudflare"
+          weight: 0.3
+        - pattern: "(?i)ray id:"
+          weight: 0.4
+      status_codes: [403, 503]
+    block_indicators:
+      - "Ray ID"
+      - "Error 1020"
+    known_bypasses:
+      - "Unicode normalization"
+      - "Double URL encoding"
+
+  modsecurity:
+    name: "ModSecurity"
+    vendor: "Trustwave SpiderLabs"
+    detection:
+      headers:
+        - pattern: "(?i)mod_security"
+          weight: 0.5
+      body:
+        - pattern: "(?i)mod_security"
+          weight: 0.5
+        - pattern: "(?i)not acceptable"
+          weight: 0.3
+      status_codes: [403, 406]
+    block_indicators:
+      - "ModSecurity"
+      - "Access denied"
+    known_bypasses:
+      - "Comment injection"
+      - "Case variation"

