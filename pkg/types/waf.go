@@ -162,9 +162,76 @@ type WAFDetectionResult struct {
 
 // ProbeResult represents the result of a detection probe
 type ProbeResult struct {
-	ProbeType string `json:"probe_type"`
-	Payload   string `json:"payload"`
-	Blocked   bool   `json:"blocked"`
-	StatusCode int   `json:"status_code"`
-	Latency   int64  `json:"latency_ms"`
+	ProbeType  string `json:"probe_type"`
+	Payload    string `json:"payload"`
+	Blocked    bool   `json:"blocked"`
+	StatusCode int    `json:"status_code"`
+	Latency    int64  `json:"latency_ms"`
+}
+
+// InferredRule represents a WAF rule pattern inferred from testing
+type InferredRule struct {
+	// Pattern is the inferred regex or keyword pattern
+	Pattern string `json:"pattern" yaml:"pattern"`
+
+	// Confidence is how confident we are in this inference (0.0-1.0)
+	Confidence float64 `json:"confidence" yaml:"confidence"`
+
+	// RuleType classifies the rule (keyword, regex, encoding, ml)
+	RuleType string `json:"rule_type" yaml:"rule_type"`
+
+	// Category is the attack category this rule detects (sqli, xss, etc.)
+	Category string `json:"category" yaml:"category"`
+
+	// BlockedBy contains payloads that triggered this rule
+	BlockedBy []string `json:"blocked_by,omitempty" yaml:"blocked_by,omitempty"`
+
+	// AllowedBy contains similar payloads that were NOT blocked
+	AllowedBy []string `json:"allowed_by,omitempty" yaml:"allowed_by,omitempty"`
+
+	// EvasionHints suggests techniques to bypass this rule
+	EvasionHints []string `json:"evasion_hints,omitempty" yaml:"evasion_hints,omitempty"`
+
+	// Examples shows matched examples
+	Examples []RuleExample `json:"examples,omitempty" yaml:"examples,omitempty"`
+
+	// Severity indicates how strict/paranoid the rule is
+	Severity string `json:"severity,omitempty" yaml:"severity,omitempty"`
+
+	// Description is a human-readable explanation of the rule
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+}
+
+// RuleExample shows a blocked/allowed example for a rule
+type RuleExample struct {
+	Payload string `json:"payload" yaml:"payload"`
+	Blocked bool   `json:"blocked" yaml:"blocked"`
+	Match   string `json:"match,omitempty" yaml:"match,omitempty"`
+}
+
+// RuleInferenceResult holds the complete result of rule inference
+type RuleInferenceResult struct {
+	// Target is the URL that was tested
+	Target string `json:"target" yaml:"target"`
+
+	// WAFType is the detected WAF
+	WAFType WAFType `json:"waf_type" yaml:"waf_type"`
+
+	// InferredRules contains all inferred rules
+	InferredRules []InferredRule `json:"inferred_rules" yaml:"inferred_rules"`
+
+	// TotalSamples is how many test payloads were sent
+	TotalSamples int `json:"total_samples" yaml:"total_samples"`
+
+	// BlockedCount is how many payloads were blocked
+	BlockedCount int `json:"blocked_count" yaml:"blocked_count"`
+
+	// AllowedCount is how many payloads were allowed
+	AllowedCount int `json:"allowed_count" yaml:"allowed_count"`
+
+	// Duration is how long inference took
+	Duration int64 `json:"duration_ms" yaml:"duration_ms"`
+
+	// Summary provides a human-readable summary
+	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
 }

@@ -107,6 +107,10 @@ func init() {
 	bypassCmd.Flags().Bool("stealth", false, "Stealth mode (slower)")
 	bypassCmd.Flags().Bool("dry-run", false, "Generate without sending")
 
+	// Minimization
+	bypassCmd.Flags().Bool("minimize", false, "Minimize successful bypass payloads")
+	bypassCmd.Flags().Int("min-iterations", 50, "Max iterations for payload minimization")
+
 	// Required flags
 	bypassCmd.MarkFlagRequired("url")
 	bypassCmd.MarkFlagRequired("param")
@@ -135,6 +139,8 @@ func runBypass(cmd *cobra.Command, args []string) error {
 	rateLimit, _ := cmd.Flags().GetFloat64("rate-limit")
 	timeout, _ := cmd.Flags().GetDuration("timeout")
 	noColor, _ := cmd.Flags().GetBool("no-color")
+	minimize, _ := cmd.Flags().GetBool("minimize")
+	minIterations, _ := cmd.Flags().GetInt("min-iterations")
 
 	// Disable color if requested
 	if noColor {
@@ -311,6 +317,32 @@ func runBypass(cmd *cobra.Command, args []string) error {
 	bar.Finish()
 	fmt.Println()
 
+	// Minimize successful bypass if requested
+	if minimize && result.Success && result.SuccessfulBypass != nil {
+		fmt.Println("\nMinimizing bypass payload...")
+		minimizer := bypass.NewMinimizer(httpClient, minIterations)
+
+		minReq := bypass.MinimizeRequest{
+			Target:         target,
+			WorkingPayload: result.SuccessfulBypass.Payload.Value,
+			AttackType:     result.SuccessfulBypass.Payload.Type,
+		}
+
+		minResult, err := minimizer.Minimize(ctx, minReq)
+		if err != nil {
+			fmt.Printf("%s Minimization failed: %v\n", color.YellowString("[!]"), err)
+		} else if minResult.StillWorks {
+			result.MinimizedPayload = minResult
+			fmt.Printf("%s Payload minimized: %.1f%% reduction (%d -> %d chars)\n",
+				color.GreenString("[+]"),
+				minResult.Reduction,
+				len(minResult.Original),
+				len(minResult.Minimized))
+		} else {
+			fmt.Printf("%s Minimization verification failed\n", color.YellowString("[!]"))
+		}
+	}
+
 	// Print results
 	printResults(result, showAll)
 
@@ -453,6 +485,20 @@ func printResults(result *types.BypassResult, showAll bool) {
 		fmt.Printf("Bypass payload:   %s\n", result.SuccessfulBypass.Payload.Value)
 		fmt.Printf("Mutations:        %s\n", strings.Join(result.SuccessfulBypass.Mutations, ", "))
 		fmt.Printf("Iterations:       %d\n", result.SuccessfulBypass.Iteration)
+
+		// Show minimized payload if available
+		if result.MinimizedPayload != nil && result.MinimizedPayload.StillWorks {
+			fmt.Println()
+			yellow.Println("=== MINIMIZED PAYLOAD ===")
+			fmt.Printf("Minimized:        %s\n", result.MinimizedPayload.Minimized)
+			fmt.Printf("Reduction:        %.1f%% (%d -> %d chars)\n",
+				result.MinimizedPayload.Reduction,
+				len(result.MinimizedPayload.Original),
+				len(result.MinimizedPayload.Minimized))
+			if len(result.MinimizedPayload.EssentialParts) > 0 {
+				fmt.Printf("Essential parts:  %s\n", strings.Join(result.MinimizedPayload.EssentialParts, " "))
+			}
+		}
 
 		if result.CurlCommand != "" {
 			fmt.Println("\nCurl command:")
