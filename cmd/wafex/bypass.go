@@ -148,10 +148,15 @@ func runBypass(cmd *cobra.Command, args []string) error {
 	// Handle interrupt
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
 	go func() {
-		<-sigCh
-		fmt.Println("\nInterrupted, cleaning up...")
-		cancel()
+		select {
+		case <-sigCh:
+			fmt.Println("\nInterrupted, cleaning up...")
+			cancel()
+		case <-ctx.Done():
+			return
+		}
 	}()
 
 	// Print banner
@@ -270,6 +275,7 @@ func runBypass(cmd *cobra.Command, args []string) error {
 
 	// Subscribe to events
 	events := bypassLoop.Subscribe(request.ID)
+	defer bypassLoop.Unsubscribe(request.ID, events)
 	go func() {
 		for event := range events {
 			switch event.Type {
@@ -298,6 +304,7 @@ func runBypass(cmd *cobra.Command, args []string) error {
 
 	result, err := bypassLoop.Run(ctx, request)
 	if err != nil {
+		bypassLoop.Unsubscribe(request.ID, events) // Clean up on error
 		return fmt.Errorf("bypass failed: %w", err)
 	}
 

@@ -3,6 +3,7 @@ package bypass
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -258,7 +259,7 @@ func (b *BypassLoop) buildRequest(target types.TargetConfig, payload string) *ty
 			// Add to URL
 			if target.Parameter != "" {
 				separator := "?"
-				if contains(req.URL, "?") {
+				if strings.Contains(req.URL, "?") {
 					separator = "&"
 				}
 				req.URL = req.URL + separator + target.Parameter + "=" + payload
@@ -333,6 +334,12 @@ func (b *BypassLoop) buildBypassPrompt(
 		tried = append(tried, m)
 	}
 
+	// Handle nil response to prevent panic
+	statusCode := 0
+	if lastAttempt.Response != nil {
+		statusCode = lastAttempt.Response.StatusCode
+	}
+
 	return fmt.Sprintf(`Analyze this blocked payload and generate a WAF bypass variant:
 
 **Original Payload:** %s
@@ -361,7 +368,7 @@ Return JSON:
 		payload,
 		lastAttempt.Payload.Type,
 		wafType,
-		lastAttempt.Response.StatusCode,
+		statusCode,
 		lastAttempt.BlockReason,
 		lastAttempt.TriggerPattern,
 		tried,
@@ -449,20 +456,6 @@ func (b *BypassLoop) emit(id, eventType string, data interface{}) {
 
 // Helper functions
 
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
-		(len(s) > 0 && len(substr) > 0 && findSubstring(s, substr) >= 0))
-}
-
-func findSubstring(s, substr string) int {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
-}
-
 func injectIntoBody(body, param, payload, contentType string) string {
 	if body == "" {
 		// Create new body
@@ -479,22 +472,11 @@ func injectIntoBody(body, param, payload, contentType string) string {
 	return body
 }
 
-func replacePathParam(url, param, value string) string {
+func replacePathParam(urlStr, param, value string) string {
 	// Replace {param} or :param with value
-	result := url
-	result = replaceAll(result, "{"+param+"}", value)
-	result = replaceAll(result, ":"+param, value)
+	result := strings.ReplaceAll(urlStr, "{"+param+"}", value)
+	result = strings.ReplaceAll(result, ":"+param, value)
 	return result
-}
-
-func replaceAll(s, old, new string) string {
-	for {
-		i := findSubstring(s, old)
-		if i < 0 {
-			return s
-		}
-		s = s[:i] + new + s[i+len(old):]
-	}
 }
 
 // GenerateID generates a unique ID for a bypass request

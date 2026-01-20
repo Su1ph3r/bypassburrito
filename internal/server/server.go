@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 
@@ -156,7 +159,17 @@ func New(config Config) (*Server, error) {
 		wafDetector: wafDetector,
 		wsUpgrader: websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool {
-				return true // Allow all origins for now
+				// Only allow localhost origins for security
+				origin := r.Header.Get("Origin")
+				if origin == "" {
+					return true // Allow requests without Origin header (e.g., CLI tools)
+				}
+				parsedOrigin, err := url.Parse(origin)
+				if err != nil {
+					return false
+				}
+				host := parsedOrigin.Hostname()
+				return host == "localhost" || host == "127.0.0.1" || host == "::1"
 			},
 		},
 		jobs:     make(map[string]*JobStatus),
@@ -220,6 +233,9 @@ func (s *Server) Start() error {
 		go s.jobWorker()
 	}
 
+	// Start job cleanup goroutine to prevent memory leak
+	go s.jobCleanup()
+
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	s.httpServer = &http.Server{
 		Addr:    addr,
@@ -227,6 +243,34 @@ func (s *Server) Start() error {
 	}
 
 	return s.httpServer.ListenAndServe()
+}
+
+// jobCleanup periodically removes completed/failed jobs older than 1 hour
+func (s *Server) jobCleanup() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-ticker.C:
+			s.cleanupOldJobs()
+		}
+	}
+}
+
+func (s *Server) cleanupOldJobs() {
+	cutoff := time.Now().Add(-1 * time.Hour)
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for id, job := range s.jobs {
+		if job.CompletedAt != nil && job.CompletedAt.Before(cutoff) {
+			delete(s.jobs, id)
+		}
+	}
 }
 
 // Shutdown gracefully shuts down the server
@@ -431,6 +475,12 @@ func (s *Server) handleDetect(c *gin.Context) {
 		return
 	}
 
+	// Validate URL to prevent SSRF
+	if err := validateTargetURL(req.URL); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
 	// Make baseline request
 	httpClientConfig := types.HTTPConfig{
 		Timeout:   30 * time.Second,
@@ -457,6 +507,76 @@ func (s *Server) handleDetect(c *gin.Context) {
 
 	result := s.wafDetector.Detect(resp)
 	c.JSON(http.StatusOK, result)
+}
+
+// validateTargetURL validates a URL to prevent SSRF attacks
+func validateTargetURL(targetURL string) error {
+	parsed, err := url.Parse(targetURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	// Only allow HTTP and HTTPS schemes
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("invalid URL scheme: only http and https are allowed")
+	}
+
+	// Check for empty host
+	if parsed.Host == "" {
+		return fmt.Errorf("invalid URL: missing host")
+	}
+
+	// Resolve the hostname to check for internal IPs
+	host := parsed.Hostname()
+	ips, err := net.LookupIP(host)
+	if err != nil {
+		// Allow if DNS lookup fails - the actual request will fail anyway
+		return nil
+	}
+
+	// Block internal/private IP ranges
+	for _, ip := range ips {
+		if isPrivateIP(ip) {
+			return fmt.Errorf("access to internal/private IP addresses is not allowed")
+		}
+	}
+
+	return nil
+}
+
+// isPrivateIP checks if an IP is in a private/internal range
+func isPrivateIP(ip net.IP) bool {
+	// Check for loopback
+	if ip.IsLoopback() {
+		return true
+	}
+
+	// Check for link-local
+	if ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return true
+	}
+
+	// Check for private ranges
+	privateRanges := []string{
+		"10.0.0.0/8",
+		"172.16.0.0/12",
+		"192.168.0.0/16",
+		"169.254.0.0/16",
+		"fc00::/7",
+		"fe80::/10",
+	}
+
+	for _, cidr := range privateRanges {
+		_, network, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		if network.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *Server) handleListQueue(c *gin.Context) {
@@ -559,9 +679,18 @@ func corsMiddleware() gin.HandlerFunc {
 }
 
 func authMiddleware(token string) gin.HandlerFunc {
+	tokenBytes := []byte(token)
+	bearerTokenBytes := []byte("Bearer " + token)
+
 	return func(c *gin.Context) {
 		auth := c.GetHeader("Authorization")
-		if auth != "Bearer "+token && auth != token {
+		authBytes := []byte(auth)
+
+		// Use constant-time comparison to prevent timing attacks
+		validBearer := subtle.ConstantTimeCompare(authBytes, bearerTokenBytes) == 1
+		validPlain := subtle.ConstantTimeCompare(authBytes, tokenBytes) == 1
+
+		if !validBearer && !validPlain {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			c.Abort()
 			return
