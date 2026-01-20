@@ -1,4 +1,4 @@
-# BypassBurrito 🌯
+# BypassBurrito
 
 **Wrap Around Any WAF** - An LLM-powered Web Application Firewall bypass generator for authorized penetration testing.
 
@@ -15,7 +15,7 @@ BypassBurrito uses Large Language Models to intelligently generate WAF bypass pa
  |  _ \| | | | '_ \ / _` / __/ __| |  _ \| | | | '__| '__| | __/ _ \
  | |_) | |_| | |_) | (_| \__ \__ \ | |_) | |_| | |  | |  | | || (_) |
  |____/ \__, | .__/ \__,_|___/___/ |____/ \__,_|_|  |_|  |_|\__\___/
-        |___/|_|                                             🌯
+        |___/|_|
 ```
 
 ## Features
@@ -227,19 +227,19 @@ See [burp-extension/README.md](burp-extension/README.md) for full documentation.
 
 | WAF | Detection | Evasion Profile |
 |-----|-----------|-----------------|
-| Cloudflare | ✅ | ✅ |
-| ModSecurity | ✅ | ✅ |
-| AWS WAF | ✅ | ✅ |
-| Akamai | ✅ | ✅ |
-| Imperva/Incapsula | ✅ | ✅ |
-| F5 BIG-IP | ✅ | ✅ |
-| Sucuri | ✅ | ✅ |
-| Wordfence | ✅ | ✅ |
-| Fortinet | ✅ | ✅ |
-| Barracuda | ✅ | ✅ |
-| Citrix | ✅ | ✅ |
-| Palo Alto | ✅ | ✅ |
-| Radware | ✅ | ✅ |
+| Cloudflare | Yes | Yes |
+| ModSecurity | Yes | Yes |
+| AWS WAF | Yes | Yes |
+| Akamai | Yes | Yes |
+| Imperva/Incapsula | Yes | Yes |
+| F5 BIG-IP | Yes | Yes |
+| Sucuri | Yes | Yes |
+| Wordfence | Yes | Yes |
+| Fortinet | Yes | Yes |
+| Barracuda | Yes | Yes |
+| Citrix | Yes | Yes |
+| Palo Alto | Yes | Yes |
+| Radware | Yes | Yes |
 
 ## Supported Attack Types
 
