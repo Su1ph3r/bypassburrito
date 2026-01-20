@@ -33,6 +33,7 @@ Thumbs.db
 # Burp extension build
 burp-extension/target/
 burp-extension/*.jar
+burp-extension/dependency-reduced-pom.xml
 
 # Local config
 .bypassburrito.yaml

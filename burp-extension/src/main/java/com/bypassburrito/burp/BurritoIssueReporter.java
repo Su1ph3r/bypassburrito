@@ -60,7 +60,7 @@ public class BurritoIssueReporter {
         }
 
         sb.append("<h4>Original Payload (Blocked)</h4>");
-        sb.append("<pre>").append(escapeHtml(result.getOriginalPayload())).append("</pre>");
+        sb.append("<pre>").append(escapeHtml(result.getOriginalPayloadValue())).append("</pre>");
 
         sb.append("<h4>Bypass Payload (Success)</h4>");
         sb.append("<pre>").append(escapeHtml(result.getSuccessfulBypass().getPayload())).append("</pre>");

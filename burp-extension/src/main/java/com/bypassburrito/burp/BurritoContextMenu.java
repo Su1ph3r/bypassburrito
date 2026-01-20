@@ -3,7 +3,7 @@ package com.bypassburrito.burp;
 import burp.api.montoya.MontoyaApi;
 import burp.api.montoya.core.ToolType;
 import burp.api.montoya.http.message.HttpRequestResponse;
-import burp.api.montoya.http.message.params.HttpParameter;
+import burp.api.montoya.http.message.params.ParsedHttpParameter;
 import burp.api.montoya.http.message.params.HttpParameterType;
 import burp.api.montoya.http.message.requests.HttpRequest;
 import burp.api.montoya.ui.contextmenu.ContextMenuEvent;
@@ -40,8 +40,8 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
 
         // Get the request(s)
         List<HttpRequestResponse> requestResponses = new ArrayList<>();
-        if (event.selectedRequestResponses().isPresent()) {
-            requestResponses.addAll(event.selectedRequestResponses().get());
+        if (!event.selectedRequestResponses().isEmpty()) {
+            requestResponses.addAll(event.selectedRequestResponses());
         }
         if (event.messageEditorRequestResponse().isPresent()) {
             requestResponses.add(event.messageEditorRequestResponse().get().requestResponse());
@@ -95,7 +95,7 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
         HttpRequest request = reqRes.request();
 
         // Extract parameters
-        List<HttpParameter> params = request.parameters();
+        List<ParsedHttpParameter> params = request.parameters();
 
         if (params.isEmpty()) {
             JOptionPane.showMessageDialog(null,
@@ -129,7 +129,7 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
         mainPanel.add(new JLabel("Parameter:"), gbc);
         gbc.gridx = 1; gbc.gridwidth = 2;
         JComboBox<String> paramCombo = new JComboBox<>();
-        for (HttpParameter param : params) {
+        for (ParsedHttpParameter param : params) {
             paramCombo.addItem(param.name() + " (" + param.type().name() + ")");
         }
         mainPanel.add(paramCombo, gbc);
@@ -161,7 +161,7 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
         JButton submitBtn = new JButton("Start Bypass");
         submitBtn.addActionListener(e -> {
             int selectedIdx = paramCombo.getSelectedIndex();
-            HttpParameter selectedParam = params.get(selectedIdx);
+            ParsedHttpParameter selectedParam = params.get(selectedIdx);
 
             BurritoBypassRequest bypassReq = new BurritoBypassRequest();
             bypassReq.setId(UUID.randomUUID().toString());
@@ -193,7 +193,7 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
     private void quickBypass(List<HttpRequestResponse> requestResponses, String attackType) {
         HttpRequestResponse reqRes = requestResponses.get(0);
         HttpRequest request = reqRes.request();
-        List<HttpParameter> params = request.parameters();
+        List<ParsedHttpParameter> params = request.parameters();
 
         if (params.isEmpty()) {
             JOptionPane.showMessageDialog(null,
@@ -204,7 +204,7 @@ public class BurritoContextMenu implements ContextMenuItemsProvider {
         }
 
         // Use first parameter for quick bypass
-        HttpParameter param = params.get(0);
+        ParsedHttpParameter param = params.get(0);
 
         BurritoBypassRequest bypassReq = new BurritoBypassRequest();
         bypassReq.setId(UUID.randomUUID().toString());
