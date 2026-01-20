@@ -9,8 +9,8 @@ BypassBurrito is an LLM-powered WAF bypass generator for authorized penetration 
 ## Architecture
 
 ```
-wafex/
-├── cmd/wafex/              # CLI entry point (Cobra)
+bypassburrito/
+├── cmd/burrito/            # CLI entry point (Cobra)
 │   ├── main.go             # Root command setup
 │   ├── bypass.go           # Main bypass command
 │   ├── detect.go           # WAF detection command
@@ -163,7 +163,7 @@ go test ./...
 go test -cover ./...
 
 # Build
-go build -o burrito ./cmd/wafex
+go build -o burrito ./cmd/burrito
 ```
 
 ## Configuration

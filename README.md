@@ -72,10 +72,10 @@ git clone https://github.com/su1ph3r/bypassburrito.git
 cd bypassburrito
 
 # Build
-go build -o burrito ./cmd/wafex/
+go build -o burrito ./cmd/burrito/
 
 # Or install globally
-go install ./cmd/wafex/
+go install ./cmd/burrito/
 ```
 
 ### Requirements

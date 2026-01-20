@@ -1,4 +1,4 @@
-# Embedded WAF Signatures for wafex
+# Embedded WAF Signatures for BypassBurrito
 # This file is embedded at compile time
 version: "1.0"
 last_updated: "2025-01-19"
