@@ -48,6 +48,24 @@ BypassBurrito uses Large Language Models to intelligently generate WAF bypass pa
 - **Genetic evolution** - Evolve bypass patterns over time
 - **Team sharing** - Export/import learned patterns
 
+### Payload Minimization
+- **Delta debugging** - Reduce working bypasses to minimum viable payload
+- **Binary search reduction** - Efficiently find essential characters
+- **Token simplification** - Attack-type aware simplification
+- **Essential part identification** - Understand what makes a bypass work
+
+### WAF Rule Inference
+- **Pattern detection** - Identify regex patterns WAF is using
+- **Keyword analysis** - Discover blocked keywords and terms
+- **Encoding detection** - Find which encodings are blocked
+- **Evasion hints** - Get suggestions for bypassing detected rules
+
+### Plugin SDK
+- **Custom mutations** - Write your own mutation plugins in Go
+- **Hot loading** - Load plugins without recompiling
+- **Priority control** - Control mutation ordering
+- **WAF-specific plugins** - Target specific WAF types
+
 ### Burp Suite Pro Integration
 - **Native extension** - Full Burp Suite Pro integration via companion extension
 - **Right-click bypass** - Send any request for bypass testing
@@ -151,6 +169,8 @@ Engine:
       --detect-waf              Auto-detect WAF (default: true)
       --use-learned             Use learned patterns (default: true)
       --evolve                  Enable genetic evolution
+      --minimize                Minimize successful bypasses to shortest form
+      --min-iterations int      Max minimization iterations (default: 50)
 
 LLM:
   -p, --provider string         LLM provider: anthropic, openai, ollama, groq
@@ -180,6 +200,45 @@ burrito detect [flags]
       --identify-ruleset    Identify WAF ruleset (OWASP CRS)
   -o, --output string       Output file
   -f, --format string       Format: json, text, markdown
+```
+
+### Infer Command
+
+Analyze WAF behavior to infer the rules and patterns being used.
+
+```bash
+burrito infer [flags]
+
+Target:
+  -u, --url string          Target URL (required)
+  -m, --method string       HTTP method (default: GET)
+      --param string        Target parameter (required)
+      --position string     Parameter position: query, body, header
+
+Inference:
+      --samples int         Number of test samples (default: 50)
+      --min-confidence float Minimum confidence threshold (default: 0.6)
+  -t, --type string         Attack types to test (default: sqli,xss,cmdi,path_traversal)
+      --hints               Include evasion hints (default: true)
+
+Output:
+  -o, --output string       Output file
+  -f, --format string       Format: json, yaml, text
+```
+
+### Plugins Command
+
+Manage mutation plugins.
+
+```bash
+# List all loaded plugins
+burrito plugins list
+
+# Show plugin details
+burrito plugins info <plugin-name>
+
+# Show plugin directory
+burrito plugins dir
 ```
 
 ### Server Mode (Burp Integration)
@@ -341,6 +400,28 @@ burrito bypass -u "https://critical-target.com/api" \
   --max-iterations 25
 ```
 
+### Minimize Successful Bypasses
+
+```bash
+# Find bypass and minimize to shortest working form
+burrito bypass -u "https://target.com/api" \
+  --param id --type sqli \
+  --minimize
+```
+
+### Infer WAF Rules
+
+```bash
+# Discover what patterns the WAF is blocking
+burrito infer -u "https://target.com/api" \
+  --param id --samples 100 \
+  -f json -o rules.json
+
+# Focus on specific attack types
+burrito infer -u "https://target.com/api" \
+  --param id --type sqli,xss
+```
+
 ## Architecture
 
 ```
@@ -350,12 +431,17 @@ burrito bypass -u "https://critical-target.com/api" \
 │  CLI (Cobra)                                                        │
 │  ├── bypass     - Generate WAF bypasses                             │
 │  ├── detect     - WAF detection & fingerprinting                    │
+│  ├── infer      - WAF rule inference                                │
+│  ├── plugins    - Plugin management                                 │
 │  └── serve      - Server mode for Burp integration                  │
 ├─────────────────────────────────────────────────────────────────────┤
 │  Core Engine                                                        │
 │  ├── LLM Providers    - Anthropic, OpenAI, Groq, Ollama, LM Studio │
 │  ├── WAF Detector     - Signature + behavioral analysis             │
+│  ├── Rule Inference   - Pattern and keyword detection               │
 │  ├── Mutation Engine  - 6 strategy types, multi-stage chains        │
+│  ├── Minimizer        - Delta debugging payload reduction           │
+│  ├── Plugin SDK       - Custom mutation plugins                     │
 │  ├── Learning System  - Pattern storage, ranking, evolution         │
 │  └── HTTP Client      - Rate limiting, retries, session management  │
 ├─────────────────────────────────────────────────────────────────────┤
