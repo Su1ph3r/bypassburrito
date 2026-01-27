@@ -178,6 +178,10 @@ func CreateMutatorsFromConfig(config types.StrategyConfig) []Mutator {
 			mutators = append(mutators, NewPolymorphicMutator())
 		case "contextual":
 			mutators = append(mutators, NewContextualMutator())
+		case "ssti":
+			mutators = append(mutators, NewSSTIMutator())
+		case "nosql":
+			mutators = append(mutators, NewNoSQLMutator())
 		}
 	}
 

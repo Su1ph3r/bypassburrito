@@ -11,12 +11,14 @@ import (
 var (
 	cfgFile string
 	verbose bool
+	version = "0.2.0"
 )
 
 // rootCmd represents the base command
 var rootCmd = &cobra.Command{
-	Use:   "burrito",
-	Short: "BypassBurrito - Wrap around any WAF",
+	Use:     "burrito",
+	Short:   "BypassBurrito - Wrap around any WAF",
+	Version: version,
 	Long: `BypassBurrito is an LLM-powered WAF bypass generator that wraps around
 Web Application Firewalls using intelligent mutation strategies.
 

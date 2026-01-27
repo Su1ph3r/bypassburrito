@@ -41,6 +41,29 @@ BypassBurrito uses Large Language Models to intelligently generate WAF bypass pa
 - **Polymorphic** - Semantically equivalent but structurally different payloads
 - **Contextual** - HTTP context-aware mutations (JSON, XML, form data)
 - **Adversarial ML** - Homoglyphs, invisible characters, bidirectional overrides
+- **SSTI** - Server-Side Template Injection mutations (Jinja2, Twig, Freemarker)
+- **NoSQL** - MongoDB/CouchDB injection mutations with operator obfuscation
+
+### Response Oracle Analysis
+- **Timing Analysis** - Statistical z-score detection of timing side-channels
+- **Differential Analysis** - Body diffing with Levenshtein similarity scoring
+- **Error Fingerprinting** - Extract WAF type, framework, and database info from errors
+- **Content-Length Anomalies** - Detect blocking via response size variations
+
+### Protocol-Level Evasion
+- **HTTP/2 Manipulation** - Pseudo-header reordering, priority manipulation
+- **WebSocket Attacks** - Upgrade-based payload delivery, message fragmentation
+- **Chunked Encoding** - Invalid chunk sizes, delays, trailer header tricks
+
+### JavaScript Challenge Solver
+- **Headless Browser** - Automated JS challenge solving (requires go-rod)
+- **Cloudflare Bypass** - Cloudflare-specific challenge handling
+- **CAPTCHA Integration** - 2captcha and AntiCaptcha API support
+
+### Multi-Request State Machine
+- **Attack Sequences** - YAML-defined multi-step attack chains
+- **Variable Extraction** - Extract tokens, cookies from responses
+- **Conditional Branching** - Dynamic flow based on response analysis
 
 ### Learning System
 - **Pattern persistence** - Store successful bypasses for future use
@@ -308,8 +331,9 @@ See [burp-extension/README.md](burp-extension/README.md) for full documentation.
 | `xss` | Cross-Site Scripting (Reflected, Stored, DOM) |
 | `cmdi` | Command Injection (Unix, Windows) |
 | `path_traversal` | Path/Directory Traversal |
-| `ssti` | Server-Side Template Injection |
+| `ssti` | Server-Side Template Injection (Jinja2, Twig, Freemarker) |
 | `xxe` | XML External Entity |
+| `nosqli` | NoSQL Injection (MongoDB, CouchDB) |
 
 ## Configuration
 
@@ -325,6 +349,10 @@ http:
   timeout: 30s
   rate_limit: 5.0
   proxy_url: ""
+  protocol:
+    prefer_http2: false
+    enable_websocket: true
+    chunked_evasion: true
 
 bypass:
   max_iterations: 15
@@ -339,11 +367,28 @@ bypass:
       - polymorphic
       - contextual
       - adversarial
+      - ssti
+      - nosql
+  oracle:
+    enabled: true
+    timing_threshold: 0.3
+    content_length_threshold: 0.1
+    baseline_samples: 5
 
 learning:
   enabled: true
   store_path: ~/.bypassburrito/learned-patterns.yaml
   auto_save: true
+
+solver:
+  enabled: false
+  headless: true
+  captcha_service: ""  # "2captcha" or "anticaptcha"
+  max_attempts: 3
+
+sequence:
+  enabled: false
+  path: ~/.bypassburrito/sequences
 
 output:
   format: text
@@ -426,7 +471,7 @@ burrito infer -u "https://target.com/api" \
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                           BypassBurrito                              │
+│                        BypassBurrito v0.2.0                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │  CLI (Cobra)                                                        │
 │  ├── bypass     - Generate WAF bypasses                             │
@@ -439,7 +484,11 @@ burrito infer -u "https://target.com/api" \
 │  ├── LLM Providers    - Anthropic, OpenAI, Groq, Ollama, LM Studio │
 │  ├── WAF Detector     - Signature + behavioral analysis             │
 │  ├── Rule Inference   - Pattern and keyword detection               │
-│  ├── Mutation Engine  - 6 strategy types, multi-stage chains        │
+│  ├── Mutation Engine  - 8 strategy types (incl. SSTI, NoSQL)        │
+│  ├── Response Oracle  - Timing, differential, fingerprint analysis  │
+│  ├── State Machine    - Multi-request attack sequences              │
+│  ├── Challenge Solver - JS/CAPTCHA solving (Cloudflare, etc.)       │
+│  ├── Protocol Evasion - HTTP/2, WebSocket, chunked encoding         │
 │  ├── Minimizer        - Delta debugging payload reduction           │
 │  ├── Plugin SDK       - Custom mutation plugins                     │
 │  ├── Learning System  - Pattern storage, ranking, evolution         │

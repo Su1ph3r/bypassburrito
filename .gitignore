@@ -48,3 +48,4 @@ learned-patterns.yaml
 
 # Temporary files
 /tmp/
+dist/

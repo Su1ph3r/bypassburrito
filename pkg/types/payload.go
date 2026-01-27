@@ -12,6 +12,7 @@ const (
 	AttackPathTraversal AttackType = "path_traversal"
 	AttackSSTI          AttackType = "ssti"
 	AttackXXE           AttackType = "xxe"
+	AttackNoSQLi        AttackType = "nosqli"
 	AttackAll           AttackType = "all"
 )
 

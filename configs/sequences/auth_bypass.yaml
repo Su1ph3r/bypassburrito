@@ -1,0 +1,71 @@
+# Authentication Bypass Sequence
+# Tests for authentication bypass using various injection techniques
+id: auth_bypass
+name: "Authentication Bypass Chain"
+description: >
+  Tests authentication mechanisms for bypass vulnerabilities using
+  injection techniques in login forms.
+author: BypassBurrito
+
+variables:
+  login_path: "/login"
+  dashboard_path: "/dashboard"
+
+steps:
+  - id: get_login
+    name: "Fetch login page"
+    method: GET
+    path: "{{login_path}}"
+    expected_status: [200]
+    extract_vars:
+      - name: csrf_token
+        source: body
+        pattern: 'name="[_]?csrf[_]?token"\s*value="([^"]+)"'
+        default: ""
+      - name: nonce
+        source: body
+        pattern: 'name="nonce"\s*value="([^"]+)"'
+        default: ""
+    on_success: attempt_login
+
+  - id: attempt_login
+    name: "Attempt login with payload"
+    method: POST
+    path: "{{login_path}}"
+    content_type: "application/x-www-form-urlencoded"
+    body: "username={{payload}}&password=test&csrf_token={{csrf_token}}&nonce={{nonce}}"
+    headers:
+      Referer: "{{base_url}}{{login_path}}"
+    expected_status: [200, 302]
+    conditions:
+      - variable: status_code
+        operator: eq
+        value: "302"
+        next_step: verify_access
+      - variable: body
+        operator: contains
+        value: "dashboard"
+        next_step: verify_access
+      - variable: body
+        operator: contains
+        value: "blocked"
+        next_step: complete
+    on_success: verify_access
+    on_failure: complete
+    delay_ms: 500
+
+  - id: verify_access
+    name: "Verify authenticated access"
+    method: GET
+    path: "{{dashboard_path}}"
+    expected_status: [200]
+    conditions:
+      - variable: status_code
+        operator: eq
+        value: "200"
+        next_step: complete
+      - variable: body
+        operator: contains
+        value: "Welcome"
+        next_step: complete
+    on_success: complete

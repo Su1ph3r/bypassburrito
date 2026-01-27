@@ -1,0 +1,62 @@
+# CSRF Token Extraction and Injection Sequence
+# This sequence extracts a CSRF token from a form and uses it in a subsequent request
+id: csrf_bypass
+name: "CSRF Token Extraction and Injection"
+description: >
+  Fetches a page containing a CSRF token, extracts it, and uses it
+  in a subsequent POST request to test for WAF bypass.
+author: BypassBurrito
+
+variables:
+  form_path: "/form"
+  submit_path: "/submit"
+
+steps:
+  - id: get_form
+    name: "Fetch form page"
+    method: GET
+    path: "{{form_path}}"
+    expected_status: [200]
+    extract_vars:
+      - name: csrf_token
+        source: body
+        pattern: 'name="csrf_token"\s*value="([^"]+)"'
+      - name: session_id
+        source: cookie
+        pattern: "session"
+    on_success: inject_payload
+    on_failure: abort
+
+  - id: inject_payload
+    name: "Submit with payload"
+    method: POST
+    path: "{{submit_path}}"
+    content_type: "application/x-www-form-urlencoded"
+    body: "csrf_token={{csrf_token}}&input={{payload}}"
+    headers:
+      Referer: "{{base_url}}{{form_path}}"
+    expected_status: [200, 302]
+    conditions:
+      - variable: status_code
+        operator: eq
+        value: "200"
+        next_step: verify_response
+      - variable: body
+        operator: contains
+        value: "blocked"
+        next_step: complete
+    on_success: complete
+    on_failure: retry
+    max_retries: 2
+
+  - id: verify_response
+    name: "Verify injection"
+    method: GET
+    path: "{{submit_path}}/result"
+    expected_status: [200]
+    conditions:
+      - variable: body
+        operator: not_contains
+        value: "error"
+        next_step: complete
+    on_success: complete

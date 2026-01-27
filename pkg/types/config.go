@@ -14,6 +14,28 @@ type Config struct {
 	WAF          WAFConfig          `yaml:"waf" mapstructure:"waf"`
 	Output       OutputConfig       `yaml:"output" mapstructure:"output"`
 	Advanced     AdvancedConfig     `yaml:"advanced" mapstructure:"advanced"`
+	Solver       SolverConfig       `yaml:"solver" mapstructure:"solver"`
+	Sequence     SequenceConfig     `yaml:"sequence" mapstructure:"sequence"`
+}
+
+// SolverConfig holds challenge solver settings
+type SolverConfig struct {
+	Enabled        bool   `yaml:"enabled" mapstructure:"enabled"`
+	BrowserPath    string `yaml:"browser_path" mapstructure:"browser_path"`
+	Headless       bool   `yaml:"headless" mapstructure:"headless"`
+	CaptchaService string `yaml:"captcha_service" mapstructure:"captcha_service"`
+	CaptchaAPIKey  string `yaml:"captcha_api_key" mapstructure:"captcha_api_key"`
+	MaxAttempts    int    `yaml:"max_attempts" mapstructure:"max_attempts"`
+	TimeoutSeconds int    `yaml:"timeout_seconds" mapstructure:"timeout_seconds"`
+}
+
+// SequenceConfig holds multi-request sequence settings
+type SequenceConfig struct {
+	Enabled         bool   `yaml:"enabled" mapstructure:"enabled"`
+	SequenceDir     string `yaml:"sequence_dir" mapstructure:"sequence_dir"`
+	MaxSteps        int    `yaml:"max_steps" mapstructure:"max_steps"`
+	DefaultTimeout  int    `yaml:"default_timeout" mapstructure:"default_timeout"`
+	PreserveSession bool   `yaml:"preserve_session" mapstructure:"preserve_session"`
 }
 
 // ProviderConfig holds LLM provider configuration
@@ -54,6 +76,16 @@ type HTTPConfig struct {
 	Session        SessionConfig     `yaml:"session" mapstructure:"session"`
 	Retry          RetryConfig       `yaml:"retry" mapstructure:"retry"`
 	VerifySSL      bool              `yaml:"verify_ssl" mapstructure:"verify_ssl"`
+	Protocol       ProtocolConfig    `yaml:"protocol" mapstructure:"protocol"`
+}
+
+// ProtocolConfig holds protocol-level evasion settings
+type ProtocolConfig struct {
+	PreferHTTP2      bool `yaml:"prefer_http2" mapstructure:"prefer_http2"`
+	EnableWebSocket  bool `yaml:"enable_websocket" mapstructure:"enable_websocket"`
+	ChunkedEvasion   bool `yaml:"chunked_evasion" mapstructure:"chunked_evasion"`
+	ConnectionReuse  bool `yaml:"connection_reuse" mapstructure:"connection_reuse"`
+	PipelineRequests bool `yaml:"pipeline_requests" mapstructure:"pipeline_requests"`
 }
 
 // TLSFingerprintConfig holds TLS fingerprint rotation settings
@@ -86,6 +118,16 @@ type BypassConfig struct {
 	Strategies     StrategyConfig  `yaml:"strategies" mapstructure:"strategies"`
 	Attacks        AttackConfig    `yaml:"attacks" mapstructure:"attacks"`
 	Deduplication  DedupConfig     `yaml:"deduplication" mapstructure:"deduplication"`
+	Oracle         OracleConfig    `yaml:"oracle" mapstructure:"oracle"`
+}
+
+// OracleConfig holds response oracle analysis settings
+type OracleConfig struct {
+	Enabled                bool    `yaml:"enabled" mapstructure:"enabled"`
+	TimingThreshold        float64 `yaml:"timing_threshold" mapstructure:"timing_threshold"`
+	ContentLengthThreshold float64 `yaml:"content_length_threshold" mapstructure:"content_length_threshold"`
+	BaselineSamples        int     `yaml:"baseline_samples" mapstructure:"baseline_samples"`
+	ErrorFingerprinting    bool    `yaml:"error_fingerprinting" mapstructure:"error_fingerprinting"`
 }
 
 // StrategyConfig holds mutation strategy settings
@@ -123,9 +165,23 @@ type AdversarialConfig struct {
 
 // AttackConfig holds attack-specific settings
 type AttackConfig struct {
-	XSS  XSSConfig  `yaml:"xss" mapstructure:"xss"`
-	SQLi SQLiConfig `yaml:"sqli" mapstructure:"sqli"`
-	CMDi CMDiConfig `yaml:"cmdi" mapstructure:"cmdi"`
+	XSS    XSSConfig    `yaml:"xss" mapstructure:"xss"`
+	SQLi   SQLiConfig   `yaml:"sqli" mapstructure:"sqli"`
+	CMDi   CMDiConfig   `yaml:"cmdi" mapstructure:"cmdi"`
+	SSTI   SSTIConfig   `yaml:"ssti" mapstructure:"ssti"`
+	NoSQLi NoSQLiConfig `yaml:"nosqli" mapstructure:"nosqli"`
+}
+
+// SSTIConfig holds SSTI attack settings
+type SSTIConfig struct {
+	TargetEngines  []string `yaml:"target_engines" mapstructure:"target_engines"`
+	DetectionFirst bool     `yaml:"detection_first" mapstructure:"detection_first"`
+}
+
+// NoSQLiConfig holds NoSQL injection attack settings
+type NoSQLiConfig struct {
+	Databases  []string `yaml:"databases" mapstructure:"databases"`
+	Techniques []string `yaml:"techniques" mapstructure:"techniques"`
 }
 
 // XSSConfig holds XSS attack settings
@@ -260,6 +316,13 @@ func DefaultConfig() *Config {
 				Backoff:    "exponential",
 				RetryOn:    []int{429, 502, 503},
 			},
+			Protocol: ProtocolConfig{
+				PreferHTTP2:      false,
+				EnableWebSocket:  false,
+				ChunkedEvasion:   false,
+				ConnectionReuse:  true,
+				PipelineRequests: false,
+			},
 		},
 		Bypass: BypassConfig{
 			MaxIterations: 15,
@@ -303,10 +366,25 @@ func DefaultConfig() *Config {
 					Platforms:      []string{"unix", "windows"},
 					BlindDetection: true,
 				},
+				SSTI: SSTIConfig{
+					TargetEngines:  []string{"jinja2", "twig", "freemarker", "velocity"},
+					DetectionFirst: true,
+				},
+				NoSQLi: NoSQLiConfig{
+					Databases:  []string{"mongodb", "couchdb"},
+					Techniques: []string{"operator_injection", "js_injection", "regex"},
+				},
 			},
 			Deduplication: DedupConfig{
 				Enabled:             true,
 				SimilarityThreshold: 0.85,
+			},
+			Oracle: OracleConfig{
+				Enabled:                true,
+				TimingThreshold:        0.3,
+				ContentLengthThreshold: 0.1,
+				BaselineSamples:        5,
+				ErrorFingerprinting:    true,
 			},
 		},
 		Learning: LearningConfig{
