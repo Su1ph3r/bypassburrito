@@ -17,6 +17,7 @@ import (
 	"github.com/su1ph3r/bypassburrito/internal/bypass"
 	"github.com/su1ph3r/bypassburrito/internal/bypass/strategies"
 	"github.com/su1ph3r/bypassburrito/internal/http"
+	"github.com/su1ph3r/bypassburrito/internal/importer"
 	"github.com/su1ph3r/bypassburrito/internal/learning"
 	"github.com/su1ph3r/bypassburrito/internal/llm"
 	"github.com/su1ph3r/bypassburrito/internal/output"
@@ -55,11 +56,11 @@ func init() {
 	rootCmd.AddCommand(bypassCmd)
 
 	// Target flags
-	bypassCmd.Flags().StringP("url", "u", "", "Target URL (required)")
+	bypassCmd.Flags().StringP("url", "u", "", "Target URL (required unless --from-indago)")
 	bypassCmd.Flags().StringP("method", "m", "GET", "HTTP method")
 	bypassCmd.Flags().StringP("data", "d", "", "Request body")
 	bypassCmd.Flags().StringArrayP("header", "H", nil, "Custom headers")
-	bypassCmd.Flags().String("param", "", "Target parameter name (required)")
+	bypassCmd.Flags().String("param", "", "Target parameter name (required unless --from-indago)")
 	bypassCmd.Flags().String("position", "query", "Parameter position: query, body, header, path, cookie")
 	bypassCmd.Flags().String("content-type", "", "Content-Type for body")
 
@@ -111,9 +112,8 @@ func init() {
 	bypassCmd.Flags().Bool("minimize", false, "Minimize successful bypass payloads")
 	bypassCmd.Flags().Int("min-iterations", 50, "Max iterations for payload minimization")
 
-	// Required flags
-	bypassCmd.MarkFlagRequired("url")
-	bypassCmd.MarkFlagRequired("param")
+	// Cross-tool integration
+	bypassCmd.Flags().String("from-indago", "", "Import WAF-blocked targets from Indago export file")
 
 	// Bind to viper
 	viper.BindPFlags(bypassCmd.Flags())
@@ -142,9 +142,56 @@ func runBypass(cmd *cobra.Command, args []string) error {
 	minimize, _ := cmd.Flags().GetBool("minimize")
 	minIterations, _ := cmd.Flags().GetInt("min-iterations")
 
+	// Cross-tool integration
+	fromIndago, _ := cmd.Flags().GetString("from-indago")
+
 	// Disable color if requested
 	if noColor {
 		color.NoColor = true
+	}
+
+	// Validate required flags (manual validation since --from-indago can replace --url/--param)
+	if fromIndago != "" {
+		export, err := importer.ParseIndagoExport(fromIndago)
+		if err != nil {
+			return fmt.Errorf("failed to parse Indago export: %w", err)
+		}
+		targets := importer.ToTargetConfigs(export)
+		if len(targets) == 0 {
+			return fmt.Errorf("no targets found in Indago export")
+		}
+		fmt.Printf("Imported %d WAF-blocked targets from Indago\n", len(targets))
+		if len(targets) > 1 {
+			fmt.Printf("Warning: using first target only, multi-target support coming soon\n")
+		}
+
+		// Use the first target (future: iterate all targets)
+		if targetURL == "" {
+			targetURL = targets[0].URL
+		}
+		if param == "" {
+			param = targets[0].Parameter
+		}
+		if method == "GET" && targets[0].Method != "" {
+			method = targets[0].Method
+		}
+
+		// Use attack types from export if user didn't explicitly set --type
+		indagoTypes := importer.ToAttackTypes(export)
+		if !cmd.Flags().Changed("type") && len(indagoTypes) > 0 {
+			var typeStrs []string
+			for _, at := range indagoTypes {
+				typeStrs = append(typeStrs, string(at))
+			}
+			attackTypes = strings.Join(typeStrs, ",")
+		}
+	} else {
+		if targetURL == "" {
+			return fmt.Errorf("--url is required (or use --from-indago)")
+		}
+		if param == "" {
+			return fmt.Errorf("--param is required (or use --from-indago)")
+		}
 	}
 
 	// Setup context with cancellation
