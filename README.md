@@ -471,7 +471,7 @@ burrito infer -u "https://target.com/api" \
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        BypassBurrito v0.2.0                          │
+│                        BypassBurrito v0.3.0                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │  CLI (Cobra)                                                        │
 │  ├── bypass     - Generate WAF bypasses                             │
@@ -507,6 +507,41 @@ burrito infer -u "https://target.com/api" \
 │  └── Issue Reporter  - Scanner findings                            │
 └────────────────────────────────────────────────────────────────────┘
 ```
+
+## Cross-Tool Integration
+
+BypassBurrito participates in a cross-tool security pipeline:
+
+```
+Nubicustos (cloud) ──containers──> Cepheus (container escape)
+Reticustos (network) ──endpoints──> Indago (API fuzzing)
+Indago (API fuzzing) ──WAF-blocked──> BypassBurrito (WAF bypass)
+Ariadne (attack paths) ──endpoints──> Indago (API fuzzing)
+All tools ──findings──> Vinculum (correlation) ──export──> Ariadne (attack paths)
+```
+
+### Importing from Indago
+
+Import WAF-blocked findings from Indago for targeted bypass testing:
+
+```bash
+# Indago exports WAF-blocked endpoints
+indago scan --spec api.yaml --export-waf-blocked waf-blocked.json
+
+# BypassBurrito auto-detects attack types and generates bypasses
+burrito bypass --from-indago waf-blocked.json
+```
+
+### Exporting to Vinculum
+
+Export bypass results for correlation in Vinculum:
+
+```bash
+burrito bypass -u "https://target.com/api" --param id --type sqli -f json -o results.json
+vinculum ingest results.json --format ariadne --output correlated.json
+```
+
+See also: [Vinculum](https://github.com/Su1ph3r/vinculum) | [Nubicustos](https://github.com/Su1ph3r/Nubicustos) | [Reticustos](https://github.com/Su1ph3r/Reticustos) | [Indago](https://github.com/Su1ph3r/indago) | [Cepheus](https://github.com/Su1ph3r/Cepheus) | [Ariadne](https://github.com/Su1ph3r/ariadne)
 
 ## Legal Disclaimer
 

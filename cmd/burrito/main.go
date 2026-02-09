@@ -11,7 +11,7 @@ import (
 var (
 	cfgFile string
 	verbose bool
-	version = "0.2.0"
+	version = "0.3.0"
 )
 
 // rootCmd represents the base command
