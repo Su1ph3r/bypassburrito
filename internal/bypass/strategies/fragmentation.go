@@ -79,14 +79,15 @@ func (f *FragmentationMutator) Mutate(payload string) []MutationResult {
 
 // FragmentWithSQLComments splits payload using SQL comments
 func (f *FragmentationMutator) FragmentWithSQLComments(payload string, chunkSize int) string {
-	if len(payload) <= chunkSize {
+	runes := []rune(payload)
+	if len(runes) <= chunkSize {
 		return payload
 	}
 
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
-		if i > 0 && i < len(payload)-1 && (i+1)%chunkSize == 0 {
+		if i > 0 && i < len(runes)-1 && (i+1)%chunkSize == 0 {
 			result.WriteString("/**/")
 		}
 	}
@@ -95,17 +96,18 @@ func (f *FragmentationMutator) FragmentWithSQLComments(payload string, chunkSize
 
 // ChunkPayload splits payload into chunks
 func (f *FragmentationMutator) ChunkPayload(payload string, chunkSize int) string {
-	if len(payload) <= chunkSize {
+	runes := []rune(payload)
+	if len(runes) <= chunkSize {
 		return payload
 	}
 
 	var chunks []string
-	for i := 0; i < len(payload); i += chunkSize {
+	for i := 0; i < len(runes); i += chunkSize {
 		end := i + chunkSize
-		if end > len(payload) {
-			end = len(payload)
+		if end > len(runes) {
+			end = len(runes)
 		}
-		chunks = append(chunks, payload[i:end])
+		chunks = append(chunks, string(runes[i:end]))
 	}
 	return strings.Join(chunks, "/**/")
 }
@@ -137,11 +139,12 @@ func (f *FragmentationMutator) splitIntoParts(s string, n int) []string {
 		return []string{s}
 	}
 
-	length := len(s)
+	runes := []rune(s)
+	length := len(runes)
 	if length <= n {
 		// Return each character as a part
 		parts := make([]string, length)
-		for i, r := range s {
+		for i, r := range runes {
 			parts[i] = string(r)
 		}
 		return parts
@@ -157,7 +160,7 @@ func (f *FragmentationMutator) splitIntoParts(s string, n int) []string {
 		if i < remainder {
 			end++
 		}
-		parts[i] = s[start:end]
+		parts[i] = string(runes[start:end])
 		start = end
 	}
 
@@ -222,36 +225,9 @@ func (f *FragmentationMutator) FragmentWithCHAR(payload string, dialect string) 
 
 // mysqlCHAR creates MySQL CHAR() syntax
 func (f *FragmentationMutator) mysqlCHAR(payload string) string {
-	var codes []string
-	for _, r := range payload {
-		codes = append(codes, string(rune('0'+r/100)), string(rune('0'+(r%100)/10)), string(rune('0'+r%10)))
-	}
-
-	var charCodes []string
-	for _, r := range payload {
-		charCodes = append(charCodes, string(rune(r)))
-	}
-
-	// Build CHAR(n1,n2,n3...)
-	var numCodes []string
-	for _, r := range payload {
-		numCodes = append(numCodes, string(rune(r)))
-	}
-
-	var result strings.Builder
-	result.WriteString("CHAR(")
-	for i, r := range payload {
-		if i > 0 {
-			result.WriteString(",")
-		}
-		result.WriteString(string([]byte{byte(r / 100 % 10) + '0', byte(r / 10 % 10) + '0', byte(r % 10) + '0'}))
-	}
-	result.WriteString(")")
-
-	// Simpler: just write the decimal codes
 	var simpleCodes []string
-	for _, r := range payload {
-		simpleCodes = append(simpleCodes, intToString(int(r)))
+	for _, b := range []byte(payload) {
+		simpleCodes = append(simpleCodes, intToString(int(b)))
 	}
 	return "CHAR(" + strings.Join(simpleCodes, ",") + ")"
 }

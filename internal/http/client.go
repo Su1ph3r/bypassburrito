@@ -166,7 +166,8 @@ func (c *Client) execute(httpReq *gohttp.Request, origReq *types.HTTPRequest) (*
 	latency := time.Since(start)
 
 	// Read response body
-	body, err := io.ReadAll(resp.Body)
+	const maxResponseBodySize = 10 * 1024 * 1024 // 10MB
+	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBodySize))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}

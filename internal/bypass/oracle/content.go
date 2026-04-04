@@ -2,6 +2,7 @@ package oracle
 
 import (
 	"math"
+	"sync"
 )
 
 // ContentLengthAnalysis holds content-length anomaly detection results
@@ -15,6 +16,7 @@ type ContentLengthAnalysis struct {
 
 // ContentLengthAnalyzer detects content-length anomalies
 type ContentLengthAnalyzer struct {
+	mu        sync.RWMutex
 	threshold float64 // Deviation threshold (e.g., 0.1 = 10%)
 	history   []int   // Historical content lengths for baseline
 }
@@ -61,6 +63,8 @@ func (c *ContentLengthAnalyzer) AnalyzeContentLength(expected, actual int) *Cont
 
 // RecordLength records a content length for historical analysis
 func (c *ContentLengthAnalyzer) RecordLength(length int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.history = append(c.history, length)
 	// Keep last 100 samples
 	if len(c.history) > 100 {
@@ -70,6 +74,8 @@ func (c *ContentLengthAnalyzer) RecordLength(length int) {
 
 // AnalyzeAgainstHistory compares a length against historical baseline
 func (c *ContentLengthAnalyzer) AnalyzeAgainstHistory(length int) *ContentLengthAnalysis {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if len(c.history) == 0 {
 		return c.AnalyzeContentLength(length, length)
 	}
@@ -86,6 +92,8 @@ func (c *ContentLengthAnalyzer) AnalyzeAgainstHistory(length int) *ContentLength
 
 // GetHistoricalStats returns statistics about recorded lengths
 func (c *ContentLengthAnalyzer) GetHistoricalStats() (avg int, min int, max int, stdDev float64) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if len(c.history) == 0 {
 		return 0, 0, 0, 0
 	}
@@ -120,6 +128,8 @@ func (c *ContentLengthAnalyzer) GetHistoricalStats() (avg int, min int, max int,
 
 // DetectConsistentLength checks if lengths are consistent (low variance)
 func (c *ContentLengthAnalyzer) DetectConsistentLength() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if len(c.history) < 3 {
 		return true
 	}
@@ -136,6 +146,8 @@ func (c *ContentLengthAnalyzer) DetectConsistentLength() bool {
 
 // ClassifyLengthPattern analyzes the pattern of content lengths
 func (c *ContentLengthAnalyzer) ClassifyLengthPattern() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	if len(c.history) < 5 {
 		return "insufficient_data"
 	}

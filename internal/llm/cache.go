@@ -13,6 +13,7 @@ type CachedProvider struct {
 	provider Provider
 	cache    *responseCache
 	ttl      time.Duration
+	done     chan struct{}
 }
 
 // responseCache holds cached responses
@@ -34,7 +35,8 @@ func NewCachedProvider(provider Provider, ttl time.Duration) *CachedProvider {
 		cache: &responseCache{
 			entries: make(map[string]*cacheEntry),
 		},
-		ttl: ttl,
+		ttl:  ttl,
+		done: make(chan struct{}),
 	}
 
 	// Start cleanup goroutine
@@ -139,10 +141,19 @@ func (p *CachedProvider) setCache(key, content string) {
 func (p *CachedProvider) cleanupLoop() {
 	ticker := time.NewTicker(p.ttl)
 	defer ticker.Stop()
-
-	for range ticker.C {
-		p.cleanup()
+	for {
+		select {
+		case <-ticker.C:
+			p.cleanup()
+		case <-p.done:
+			return
+		}
 	}
+}
+
+// Close stops the cleanup goroutine
+func (p *CachedProvider) Close() {
+	close(p.done)
 }
 
 // cleanup removes expired entries

@@ -471,7 +471,7 @@ burrito infer -u "https://target.com/api" \
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        BypassBurrito v0.3.0                          │
+│                        BypassBurrito v0.3.1                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │  CLI (Cobra)                                                        │
 │  ├── bypass     - Generate WAF bypasses                             │

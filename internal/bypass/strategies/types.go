@@ -86,6 +86,9 @@ func NewStrategyRegistry() *StrategyRegistry {
 	r.Register("encoding", NewEncodingMutator())
 	r.Register("obfuscation", NewObfuscationMutator())
 	r.Register("adversarial", NewAdversarialMutator())
+	r.Register("parsing_discrepancy", NewParsingDiscrepancyMutator())
+	r.Register("padding", NewPaddingMutator())
+	r.Register("path_traversal", NewPathTraversalMutator())
 
 	// Register default chains
 	r.RegisterChain(NewMutationChain(
@@ -182,6 +185,16 @@ func CreateMutatorsFromConfig(config types.StrategyConfig) []Mutator {
 			mutators = append(mutators, NewSSTIMutator())
 		case "nosql":
 			mutators = append(mutators, NewNoSQLMutator())
+		case "parsing_discrepancy":
+			mutators = append(mutators, NewParsingDiscrepancyMutator())
+		case "padding":
+			m := NewPaddingMutator()
+			if len(config.Padding.Sizes) > 0 {
+				m.Sizes = config.Padding.Sizes
+			}
+			mutators = append(mutators, m)
+		case "path_traversal":
+			mutators = append(mutators, NewPathTraversalMutator())
 		}
 	}
 

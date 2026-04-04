@@ -2,6 +2,7 @@ package bypass
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -494,6 +495,8 @@ func (m *Minimizer) buildRequest(target types.TargetConfig, payload string) *typ
 // MinimizeMultiple minimizes multiple payloads and returns the best results
 func (m *Minimizer) MinimizeMultiple(ctx context.Context, target types.TargetConfig, payloads []string, attackType types.AttackType) ([]*types.MinimizationResult, error) {
 	var results []*types.MinimizationResult
+	var lastErr error
+	errCount := 0
 
 	for _, payload := range payloads {
 		select {
@@ -510,12 +513,18 @@ func (m *Minimizer) MinimizeMultiple(ctx context.Context, target types.TargetCon
 
 		result, err := m.Minimize(ctx, req)
 		if err != nil {
+			lastErr = err
+			errCount++
 			continue
 		}
 
 		if result.StillWorks {
 			results = append(results, result)
 		}
+	}
+
+	if len(results) == 0 && errCount > 0 {
+		return nil, fmt.Errorf("all %d payloads failed minimization, last error: %w", errCount, lastErr)
 	}
 
 	// Sort by reduction percentage (highest first)

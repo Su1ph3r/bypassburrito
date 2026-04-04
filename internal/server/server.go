@@ -407,14 +407,15 @@ func (s *Server) handleGetBypass(c *gin.Context) {
 
 	s.mu.RLock()
 	status, ok := s.jobs[id]
-	s.mu.RUnlock()
-
 	if !ok {
+		s.mu.RUnlock()
 		c.JSON(http.StatusNotFound, gin.H{"error": "job not found"})
 		return
 	}
+	statusCopy := *status
+	s.mu.RUnlock()
 
-	c.JSON(http.StatusOK, status)
+	c.JSON(http.StatusOK, &statusCopy)
 }
 
 func (s *Server) handleCancelBypass(c *gin.Context) {
@@ -452,6 +453,18 @@ func (s *Server) handleBypassWebSocket(c *gin.Context) {
 		return
 	}
 	defer conn.Close()
+
+	// Check if job is already completed -- don't subscribe to a finished job
+	s.mu.RLock()
+	jobStatus, exists := s.jobs[id]
+	if exists && (jobStatus.Status == "completed" || jobStatus.Status == "failed" || jobStatus.Status == "cancelled") {
+		s.mu.RUnlock()
+		// Send final status and close
+		data, _ := json.Marshal(jobStatus)
+		conn.WriteMessage(websocket.TextMessage, data)
+		return
+	}
+	s.mu.RUnlock()
 
 	// Subscribe to events
 	events := s.bypassLoop.Subscribe(id)

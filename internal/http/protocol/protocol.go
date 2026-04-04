@@ -98,6 +98,10 @@ type ChunkedOptions struct {
 	InvalidChunkSize   bool              `json:"invalid_chunk_size" yaml:"invalid_chunk_size"`
 	TrailerHeaders     map[string]string `json:"trailer_headers" yaml:"trailer_headers"`
 	ZeroChunkInMiddle  bool              `json:"zero_chunk_in_middle" yaml:"zero_chunk_in_middle"`
+	ChunkExtension     string            `json:"chunk_extension" yaml:"chunk_extension"`         // Extension appended after chunk size (e.g., ";ext=val" or bare ";")
+	DualHeaders        bool              `json:"dual_headers" yaml:"dual_headers"`                // Include both Content-Length and Transfer-Encoding headers (CL.TE smuggling)
+	TEObfuscation      string            `json:"te_obfuscation" yaml:"te_obfuscation"`            // Obfuscated Transfer-Encoding value (e.g., "chunked\t", " chunked")
+	SmugglingVariant   string            `json:"smuggling_variant" yaml:"smuggling_variant"`      // Smuggling type: "cl_te", "te_cl", "te_te"
 }
 
 // DefaultChunkedOptions returns default chunked options

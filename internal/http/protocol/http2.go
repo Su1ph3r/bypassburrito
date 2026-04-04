@@ -16,29 +16,32 @@ import (
 
 // HTTP2Client handles HTTP/2 specific operations
 type HTTP2Client struct {
-	transport *http2.Transport
-	client    *http.Client
-	config    HTTP2Options
+	transport          *http2.Transport
+	client             *http.Client
+	config             HTTP2Options
+	InsecureSkipVerify bool
 }
 
 // NewHTTP2Client creates a new HTTP/2 client
 func NewHTTP2Client(config HTTP2Options) *HTTP2Client {
-	transport := &http2.Transport{
+	c := &HTTP2Client{
+		config: config,
+	}
+
+	c.transport = &http2.Transport{
 		AllowHTTP: true, // Allow h2c (HTTP/2 cleartext)
 		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true, // For testing
+			InsecureSkipVerify: c.InsecureSkipVerify,
 			NextProtos:         []string{"h2"},
 		},
 	}
 
-	return &HTTP2Client{
-		transport: transport,
-		client: &http.Client{
-			Transport: transport,
-			Timeout:   30 * time.Second,
-		},
-		config: config,
+	c.client = &http.Client{
+		Transport: c.transport,
+		Timeout:   30 * time.Second,
 	}
+
+	return c
 }
 
 // SendRequest sends an HTTP/2 request with optional manipulations

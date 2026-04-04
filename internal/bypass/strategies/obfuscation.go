@@ -164,10 +164,11 @@ func (o *ObfuscationMutator) commentInWord(word string) string {
 
 // InjectSQLCommentsAggressive injects /**/ between every character
 func (o *ObfuscationMutator) InjectSQLCommentsAggressive(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
-		if i < len(payload)-1 && r != ' ' {
+		if i < len(runes)-1 && r != ' ' {
 			result.WriteString("/**/")
 		}
 	}
@@ -270,11 +271,12 @@ func (o *ObfuscationMutator) AddExtraWhitespace(payload string) string {
 
 // InjectNullBytes injects literal null bytes
 func (o *ObfuscationMutator) InjectNullBytes(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
 		// Inject null byte after dangerous characters
-		if i > 0 && i < len(payload)-1 && (r == '\'' || r == '"' || r == '<' || r == '>') {
+		if i > 0 && i < len(runes)-1 && (r == '\'' || r == '"' || r == '<' || r == '>') {
 			result.WriteByte(0x00)
 		}
 	}
@@ -311,26 +313,28 @@ func (o *ObfuscationMutator) StringConcatenation(payload string, dialect string)
 }
 
 func (o *ObfuscationMutator) mysqlConcat(payload string) string {
-	if len(payload) < 4 {
+	runes := []rune(payload)
+	if len(runes) < 4 {
 		return payload
 	}
-	// Simple split for demonstration
-	mid := len(payload) / 2
-	return "CONCAT('" + payload[:mid] + "','" + payload[mid:] + "')"
+	mid := len(runes) / 2
+	return "CONCAT('" + string(runes[:mid]) + "','" + string(runes[mid:]) + "')"
 }
 
 func (o *ObfuscationMutator) mssqlConcat(payload string) string {
-	if len(payload) < 4 {
+	runes := []rune(payload)
+	if len(runes) < 4 {
 		return payload
 	}
-	mid := len(payload) / 2
-	return "'" + payload[:mid] + "'+'" + payload[mid:] + "'"
+	mid := len(runes) / 2
+	return "'" + string(runes[:mid]) + "'+'" + string(runes[mid:]) + "'"
 }
 
 func (o *ObfuscationMutator) oracleConcat(payload string) string {
-	if len(payload) < 4 {
+	runes := []rune(payload)
+	if len(runes) < 4 {
 		return payload
 	}
-	mid := len(payload) / 2
-	return "'" + payload[:mid] + "'||'" + payload[mid:] + "'"
+	mid := len(runes) / 2
+	return "'" + string(runes[:mid]) + "'||'" + string(runes[mid:]) + "'"
 }

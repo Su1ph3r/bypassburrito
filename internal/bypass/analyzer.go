@@ -37,6 +37,13 @@ func NewResponseAnalyzer() *ResponseAnalyzer {
 
 // Analyze analyzes an HTTP response
 func (a *ResponseAnalyzer) Analyze(resp *types.HTTPResponse) *types.ResponseAnalysis {
+	if resp == nil {
+		return &types.ResponseAnalysis{
+			Classification: types.ClassificationError,
+			ErrorMessage:   "nil response",
+		}
+	}
+
 	analysis := &types.ResponseAnalysis{
 		Classification:  types.ClassificationUnknown,
 		Confidence:      0.5,

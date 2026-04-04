@@ -203,11 +203,12 @@ func (a *AdversarialMutator) ApplyCyrillicHomoglyphs(payload string) string {
 
 // InsertZeroWidth inserts zero-width space characters
 func (a *AdversarialMutator) InsertZeroWidth(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
 		// Insert zero-width space after certain characters
-		if i > 0 && i < len(payload)-1 && isKeywordChar(r) {
+		if i > 0 && i < len(runes)-1 && isKeywordChar(r) {
 			result.WriteRune(zeroWidthSpace)
 		}
 	}
@@ -216,10 +217,11 @@ func (a *AdversarialMutator) InsertZeroWidth(payload string) string {
 
 // InsertZeroWidthJoiners inserts zero-width joiner characters
 func (a *AdversarialMutator) InsertZeroWidthJoiners(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
-		if i < len(payload)-1 {
+		if i < len(runes)-1 {
 			result.WriteRune(zeroWidthJoiner)
 		}
 	}
@@ -228,11 +230,12 @@ func (a *AdversarialMutator) InsertZeroWidthJoiners(payload string) string {
 
 // InsertSoftHyphens inserts soft hyphen characters
 func (a *AdversarialMutator) InsertSoftHyphens(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
 		// Insert soft hyphen in the middle of words
-		if i > 0 && i < len(payload)-1 && isAlphaNum(r) {
+		if i > 0 && i < len(runes)-1 && isAlphaNum(r) {
 			result.WriteRune(softHyphen)
 		}
 	}
@@ -241,10 +244,11 @@ func (a *AdversarialMutator) InsertSoftHyphens(payload string) string {
 
 // InsertWordJoiners inserts word joiner characters
 func (a *AdversarialMutator) InsertWordJoiners(payload string) string {
+	runes := []rune(payload)
 	var result strings.Builder
-	for i, r := range payload {
+	for i, r := range runes {
 		result.WriteRune(r)
-		if i > 0 && i < len(payload)-1 && rand.Float32() < 0.5 {
+		if i > 0 && i < len(runes)-1 && rand.Float32() < 0.5 {
 			result.WriteRune(wordJoiner)
 		}
 	}

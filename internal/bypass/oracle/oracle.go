@@ -2,6 +2,7 @@
 package oracle
 
 import (
+	"sync"
 	"time"
 
 	"github.com/su1ph3r/bypassburrito/pkg/types"
@@ -50,6 +51,7 @@ type BaselineStats struct {
 
 // DefaultOracle implements ResponseOracle with configurable thresholds
 type DefaultOracle struct {
+	mu               sync.RWMutex
 	config           OracleConfig
 	baselines        []*types.HTTPResponse
 	timingAnalyzer   *TimingAnalyzer
@@ -92,6 +94,8 @@ func NewDefaultOracle(config OracleConfig) *DefaultOracle {
 
 // RecordBaseline stores a baseline response
 func (o *DefaultOracle) RecordBaseline(resp *types.HTTPResponse) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
 	if len(o.baselines) < o.config.BaselineSamples {
 		o.baselines = append(o.baselines, resp)
 	}
@@ -99,6 +103,8 @@ func (o *DefaultOracle) RecordBaseline(resp *types.HTTPResponse) {
 
 // GetBaselineStats returns statistics about recorded baselines
 func (o *DefaultOracle) GetBaselineStats() *BaselineStats {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
 	if len(o.baselines) == 0 {
 		return &BaselineStats{}
 	}
@@ -145,9 +151,11 @@ func (o *DefaultOracle) AnalyzeWithBaseline(resp *types.HTTPResponse, baseline *
 
 	// Use provided baseline or first recorded baseline
 	baselineResp := baseline
+	o.mu.RLock()
 	if baselineResp == nil && len(o.baselines) > 0 {
 		baselineResp = o.baselines[0]
 	}
+	o.mu.RUnlock()
 
 	if baselineResp == nil {
 		analysis.Reasoning = "No baseline available for comparison"

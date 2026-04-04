@@ -63,6 +63,10 @@ func NewBypassLoop(
 
 // Run executes the bypass loop for a single payload
 func (b *BypassLoop) Run(ctx context.Context, req types.BypassRequest) (*types.BypassResult, error) {
+	if len(req.Payloads) == 0 {
+		return nil, fmt.Errorf("no payloads provided in bypass request")
+	}
+
 	result := &types.BypassResult{
 		ID:              req.ID,
 		OriginalPayload: req.Payloads[0], // Start with first payload
@@ -78,7 +82,9 @@ func (b *BypassLoop) Run(ctx context.Context, req types.BypassRequest) (*types.B
 	// Detect WAF if enabled
 	if b.config.DetectWAF {
 		wafResult, err := b.detectWAF(ctx, req.Target)
-		if err == nil && wafResult.Detected {
+		if err != nil {
+			b.emit(req.ID, "waf_detection_error", map[string]string{"error": err.Error()})
+		} else if wafResult.Detected {
 			result.WAFDetected = wafResult.Fingerprint
 			b.emit(req.ID, "waf_detected", wafResult.Fingerprint)
 		}
@@ -166,6 +172,10 @@ func (b *BypassLoop) processPayload(
 				ctx, currentPayload, attempt, wafFingerprint, triedMutations,
 			)
 			if err != nil {
+				b.emit(req.ID, "llm_fallback", map[string]interface{}{
+					"error":    err.Error(),
+					"fallback": "mutation_only",
+				})
 				// Fallback to mutation-only approach
 				nextPayload, mutations = b.applyMutations(currentPayload, triedMutations)
 			}
@@ -449,7 +459,7 @@ func (b *BypassLoop) emit(id, eventType string, data interface{}) {
 		select {
 		case ch <- event:
 		default:
-			// Channel full, skip
+			// Channel full, event dropped -- non-blocking to prevent bypass loop stall
 		}
 	}
 }

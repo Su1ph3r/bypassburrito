@@ -10,6 +10,7 @@ import (
 
 // RateLimiter controls request rate
 type RateLimiter struct {
+	mu      sync.RWMutex
 	limiter *rate.Limiter
 	enabled bool
 }
@@ -28,22 +29,32 @@ func NewRateLimiter(requestsPerSecond float64) *RateLimiter {
 
 // Wait waits until a request can be made
 func (r *RateLimiter) Wait(ctx context.Context) error {
-	if !r.enabled {
+	r.mu.RLock()
+	enabled := r.enabled
+	limiter := r.limiter
+	r.mu.RUnlock()
+	if !enabled {
 		return nil
 	}
-	return r.limiter.Wait(ctx)
+	return limiter.Wait(ctx)
 }
 
 // Allow checks if a request is allowed
 func (r *RateLimiter) Allow() bool {
-	if !r.enabled {
+	r.mu.RLock()
+	enabled := r.enabled
+	limiter := r.limiter
+	r.mu.RUnlock()
+	if !enabled {
 		return true
 	}
-	return r.limiter.Allow()
+	return limiter.Allow()
 }
 
 // SetRate updates the rate limit
 func (r *RateLimiter) SetRate(requestsPerSecond float64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if requestsPerSecond <= 0 {
 		r.enabled = false
 		return

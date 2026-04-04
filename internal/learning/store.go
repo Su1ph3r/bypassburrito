@@ -96,8 +96,8 @@ func (s *Store) Load() error {
 
 // Save persists patterns to disk
 func (s *Store) Save() error {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
 	if s.path == "" {
 		return nil
@@ -188,7 +188,11 @@ func (s *Store) Record(attempt *types.BypassAttempt, wafType types.WAFType, succ
 
 	// Auto-save if enabled
 	if s.autoSave && s.dirty {
-		go s.Save()
+		go func() {
+			if err := s.Save(); err != nil {
+				fmt.Fprintf(os.Stderr, "warning: auto-save failed: %v\n", err)
+			}
+		}()
 	}
 }
 

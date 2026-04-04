@@ -4,6 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -75,7 +76,7 @@ func (l *PayloadLibrary) LoadFromDirectory(dir string) error {
 			return nil
 		}
 
-		data, err := fs.ReadFile(nil, path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return fmt.Errorf("failed to read payload file %s: %w", path, err)
 		}

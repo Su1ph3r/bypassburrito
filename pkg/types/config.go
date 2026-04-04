@@ -136,6 +136,12 @@ type StrategyConfig struct {
 	Encoding    EncodingConfig    `yaml:"encoding" mapstructure:"encoding"`
 	Obfuscation ObfuscationConfig `yaml:"obfuscation" mapstructure:"obfuscation"`
 	Adversarial AdversarialConfig `yaml:"adversarial" mapstructure:"adversarial"`
+	Padding     PaddingConfig     `yaml:"padding" mapstructure:"padding"`
+}
+
+// PaddingConfig configures the padding mutation strategy.
+type PaddingConfig struct {
+	Sizes []int `yaml:"sizes" mapstructure:"sizes"`
 }
 
 // EncodingConfig holds encoding strategy settings
@@ -332,6 +338,12 @@ func DefaultConfig() *Config {
 			UseLearned:    true,
 			Strategies: StrategyConfig{
 				Enabled: []string{"encoding", "obfuscation", "fragmentation", "polymorphic", "contextual", "adversarial"},
+				// Additional opt-in strategies (not enabled by default):
+				// "parsing_discrepancy" - Content-Type/charset/boundary parser confusion
+				// "padding" - Body padding to exceed WAF inspection limits
+				// "path_traversal" - Path traversal encoding evasion
+				// "ssti" - Server-side template injection mutations
+				// "nosql" - NoSQL injection mutations
 				Encoding: EncodingConfig{
 					URL:            true,
 					DoubleURL:      true,

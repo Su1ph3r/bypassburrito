@@ -163,9 +163,11 @@ func (d *Detector) matchSignature(resp *types.HTTPResponse, wafType string, sig 
 	}
 
 	// Check status codes
+	statusBonus := 0.2
+	totalWeight += statusBonus
 	for _, code := range sig.Detection.StatusCodes {
 		if resp.StatusCode == code {
-			matchedWeight += 0.2 // Small bonus for status code match
+			matchedWeight += statusBonus
 			break
 		}
 	}

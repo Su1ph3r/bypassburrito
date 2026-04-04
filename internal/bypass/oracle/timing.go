@@ -113,10 +113,12 @@ func (t *TimingAnalyzer) AnalyzeMultiple(latencies []time.Duration) *TimingAnaly
 	analysis.Percentile95 = time.Duration(sortedSamples[p95Index]) * time.Millisecond
 
 	// Detect inconsistency (high variance indicates WAF processing)
-	coefficientOfVariation := stdDev / mean
-	if coefficientOfVariation > t.threshold {
-		analysis.IsAnomaly = true
-		analysis.AnomalyType = "inconsistent"
+	if mean > 0 {
+		coefficientOfVariation := stdDev / mean
+		if coefficientOfVariation > t.threshold {
+			analysis.IsAnomaly = true
+			analysis.AnomalyType = "inconsistent"
+		}
 	}
 
 	// Set baseline and test latency for reporting

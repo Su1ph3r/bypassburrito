@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // HTTPRequest represents an HTTP request
 type HTTPRequest struct {
@@ -120,13 +123,18 @@ type CurlCommand struct {
 	WithInsecure string `json:"with_insecure,omitempty"`
 }
 
+// escapeSingleQuote escapes single quotes for shell-safe single-quoted strings.
+func escapeSingleQuote(s string) string {
+	return strings.ReplaceAll(s, "'", "'\\''")
+}
+
 // GenerateCurlCommand creates a curl command from request
 func GenerateCurlCommand(req *HTTPRequest) *CurlCommand {
 	cmd := "curl -X " + req.Method
 
 	// Add headers
 	for key, value := range req.Headers {
-		cmd += " -H '" + key + ": " + value + "'"
+		cmd += " -H '" + escapeSingleQuote(key+": "+value) + "'"
 	}
 
 	// Add cookies
@@ -138,15 +146,15 @@ func GenerateCurlCommand(req *HTTPRequest) *CurlCommand {
 			}
 			cookieStr += key + "=" + value
 		}
-		cmd += " -H 'Cookie: " + cookieStr + "'"
+		cmd += " -H '" + escapeSingleQuote("Cookie: "+cookieStr) + "'"
 	}
 
 	// Add body
 	if req.Body != "" {
-		cmd += " -d '" + req.Body + "'"
+		cmd += " -d '" + escapeSingleQuote(req.Body) + "'"
 	}
 
-	cmd += " '" + req.URL + "'"
+	cmd += " '" + escapeSingleQuote(req.URL) + "'"
 
 	return &CurlCommand{
 		Command:      cmd,
