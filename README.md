@@ -1,574 +1,68 @@
 # BypassBurrito
 
-**Wrap Around Any WAF** - An LLM-powered Web Application Firewall bypass generator for authorized penetration testing.
+Feeds your blocked payloads through an LLM to generate WAF bypass variants.
 
-[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat&logo=go)](https://go.dev)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+## How it works
 
-## Overview
+You give it a payload and a target. The LLM mutates it using encoding, obfuscation, fragmentation, and protocol-level tricks until something gets past the WAF. Rinse, repeat, evolve.
 
-BypassBurrito uses Large Language Models to intelligently generate WAF bypass payloads through iterative mutation strategies. It analyzes WAF responses, understands blocking patterns, and evolves payloads to evade detection while maintaining attack functionality.
-
-```
-  ____                              ____                  _ _
- | __ ) _   _ _ __   __ _ ___ ___  | __ ) _   _ _ __ _ __(_) |_ ___
- |  _ \| | | | '_ \ / _` / __/ __| |  _ \| | | | '__| '__| | __/ _ \
- | |_) | |_| | |_) | (_| \__ \__ \ | |_) | |_| | |  | |  | | || (_) |
- |____/ \__, | .__/ \__,_|___/___/ |____/ \__,_|_|  |_|  |_|\__\___/
-        |___/|_|
-```
-
-## Features
-
-### Multi-Provider LLM Support
-- **Anthropic Claude** - Claude 3.5 Sonnet/Opus for sophisticated analysis
-- **OpenAI GPT** - GPT-4o for versatile bypass generation
-- **Groq** - Fast inference with Llama 3.1 70B
-- **Ollama** - Local model support for privacy
-- **LM Studio** - Local model integration
-- **Ensemble Mode** - Combine multiple models for consensus-based bypasses
-
-### Intelligent WAF Detection
-- **Signature-based detection** for 12+ WAF vendors (Cloudflare, ModSecurity, AWS WAF, Akamai, Imperva, F5, Sucuri, etc.)
-- **Behavioral analysis** - Timing patterns, rate limits, response fingerprinting
-- **OWASP CRS detection** - Identify ModSecurity Core Rule Set configurations
-- **Confidence scoring** - Bayesian probability of WAF identification
-
-### Advanced Mutation Strategies
-- **Encoding** - URL, Unicode, HTML entities, mixed encodings, overlong UTF-8
-- **Obfuscation** - Comment injection, case randomization, whitespace manipulation
-- **Fragmentation** - Payload splitting, chunked encoding, parameter pollution
-- **Polymorphic** - Semantically equivalent but structurally different payloads
-- **Contextual** - HTTP context-aware mutations (JSON, XML, form data)
-- **Adversarial ML** - Homoglyphs, invisible characters, bidirectional overrides
-- **SSTI** - Server-Side Template Injection mutations (Jinja2, Twig, Freemarker)
-- **NoSQL** - MongoDB/CouchDB injection mutations with operator obfuscation
-
-### Response Oracle Analysis
-- **Timing Analysis** - Statistical z-score detection of timing side-channels
-- **Differential Analysis** - Body diffing with Levenshtein similarity scoring
-- **Error Fingerprinting** - Extract WAF type, framework, and database info from errors
-- **Content-Length Anomalies** - Detect blocking via response size variations
-
-### Protocol-Level Evasion
-- **HTTP/2 Manipulation** - Pseudo-header reordering, priority manipulation
-- **WebSocket Attacks** - Upgrade-based payload delivery, message fragmentation
-- **Chunked Encoding** - Invalid chunk sizes, delays, trailer header tricks
-
-### JavaScript Challenge Solver
-- **Headless Browser** - Automated JS challenge solving (requires go-rod)
-- **Cloudflare Bypass** - Cloudflare-specific challenge handling
-- **CAPTCHA Integration** - 2captcha and AntiCaptcha API support
-
-### Multi-Request State Machine
-- **Attack Sequences** - YAML-defined multi-step attack chains
-- **Variable Extraction** - Extract tokens, cookies from responses
-- **Conditional Branching** - Dynamic flow based on response analysis
-
-### Learning System
-- **Pattern persistence** - Store successful bypasses for future use
-- **Success rate tracking** - Rank mutations by effectiveness per WAF
-- **Genetic evolution** - Evolve bypass patterns over time
-- **Team sharing** - Export/import learned patterns
-
-### Payload Minimization
-- **Delta debugging** - Reduce working bypasses to minimum viable payload
-- **Binary search reduction** - Efficiently find essential characters
-- **Token simplification** - Attack-type aware simplification
-- **Essential part identification** - Understand what makes a bypass work
-
-### WAF Rule Inference
-- **Pattern detection** - Identify regex patterns WAF is using
-- **Keyword analysis** - Discover blocked keywords and terms
-- **Encoding detection** - Find which encodings are blocked
-- **Evasion hints** - Get suggestions for bypassing detected rules
-
-### Plugin SDK
-- **Custom mutations** - Write your own mutation plugins in Go
-- **Hot loading** - Load plugins without recompiling
-- **Priority control** - Control mutation ordering
-- **WAF-specific plugins** - Target specific WAF types
-
-### Burp Suite Pro Integration
-- **Native extension** - Full Burp Suite Pro integration via companion extension
-- **Right-click bypass** - Send any request for bypass testing
-- **Real-time streaming** - WebSocket updates during bypass attempts
-- **Issue reporting** - Bypasses reported as Burp Scanner findings
-
-### Multiple Output Formats
-- **JSON** - Machine-readable results
-- **Markdown** - Human-readable reports
-- **HTML** - Interactive web reports
-- **Burp XML** - Import findings into Burp
-- **Nuclei** - Generate Nuclei templates from successful bypasses
-- **Curl** - Reproducible curl commands
-
-## Installation
-
-### From Source
+## Install
 
 ```bash
-# Clone the repository
 git clone https://github.com/su1ph3r/bypassburrito.git
 cd bypassburrito
-
-# Build
 go build -o burrito ./cmd/burrito/
-
-# Or install globally
-go install ./cmd/burrito/
 ```
 
-### Requirements
-
-- Go 1.23 or later
-- LLM API key (Anthropic, OpenAI, or Groq) OR local model (Ollama/LM Studio)
-
-## Quick Start
-
-### 1. Set up your API key
-
-```bash
-# For Anthropic (recommended)
-export ANTHROPIC_API_KEY="your-key-here"
-
-# Or for OpenAI
-export OPENAI_API_KEY="your-key-here"
-
-# Or for Groq
-export GROQ_API_KEY="your-key-here"
-```
-
-### 2. Detect WAF
-
-```bash
-burrito detect -u "https://target.com"
-
-# Deep analysis with behavioral profiling
-burrito detect -u "https://target.com" --deep
-```
-
-### 3. Generate Bypasses
-
-```bash
-# SQLi bypass
-burrito bypass -u "https://target.com/api" --param id --type sqli
-
-# XSS bypass with proxy (for Burp)
-burrito bypass -u "https://target.com/search" --param q --type xss \
-  --proxy http://127.0.0.1:8080
-
-# Multiple attack types
-burrito bypass -u "https://target.com/api" --param input --type sqli,xss
-
-# Custom payload
-burrito bypass -u "https://target.com/api" --param id \
-  --payload "' OR 1=1--"
-```
+Requires Go 1.23+ and an LLM API key (or a local model via Ollama/LM Studio).
 
 ## Usage
 
-### Bypass Command
-
 ```bash
-burrito bypass [flags]
+# Basic SQLi bypass
+burrito bypass -u "https://target.com/api" --param id --type sqli
 
-Target:
-  -u, --url string              Target URL (required)
-  -m, --method string           HTTP method (default: GET)
-  -d, --data string             Request body
-  -H, --header strings          Custom headers
-      --param string            Target parameter (required)
-      --position string         Parameter position: query, body, header, cookie
+# Feed payloads from a file
+burrito bypass -u "https://target.com/api" --param id --payload-file payloads.txt
 
-Attack:
-  -t, --type string             Attack type: xss, sqli, cmdi, path_traversal, ssti, xxe
-  -P, --payload string          Custom payload
-      --payload-file string     File with payloads
+# Target a specific WAF
+burrito bypass -u "https://target.com/api" --param id --type xss --waf-type cloudflare
 
-Engine:
-      --max-iterations int      Max iterations per payload (default: 15)
-      --max-payloads int        Max base payloads (default: 30)
-      --detect-waf              Auto-detect WAF (default: true)
-      --use-learned             Use learned patterns (default: true)
-      --evolve                  Enable genetic evolution
-      --minimize                Minimize successful bypasses to shortest form
-      --min-iterations int      Max minimization iterations (default: 50)
-
-LLM:
-  -p, --provider string         LLM provider: anthropic, openai, ollama, groq
-      --model string            Model name
-      --ensemble                Use multi-model ensemble
-
-HTTP:
-      --proxy string            HTTP proxy URL
-      --rate-limit float        Requests/second (default: 5)
-      --timeout duration        Request timeout (default: 30s)
-
-Output:
-  -o, --output string           Output file
-  -f, --format string           Format: json, markdown, html, burp, nuclei
-      --show-all                Show all attempts
-      --curl                    Generate curl commands
+# Output as markdown report or Nuclei templates
+burrito bypass -u "https://target.com/api" --param id --type sqli -f markdown -o report.md
+burrito bypass -u "https://target.com/api" --param id --type xss -f nuclei -o templates/
 ```
-
-### Detect Command
-
-```bash
-burrito detect [flags]
-
-  -u, --url string          Target URL (required)
-      --deep                Deep behavioral analysis
-      --probe-payloads      Use payloads to trigger WAF (default: true)
-      --identify-ruleset    Identify WAF ruleset (OWASP CRS)
-  -o, --output string       Output file
-  -f, --format string       Format: json, text, markdown
-```
-
-### Infer Command
-
-Analyze WAF behavior to infer the rules and patterns being used.
-
-```bash
-burrito infer [flags]
-
-Target:
-  -u, --url string          Target URL (required)
-  -m, --method string       HTTP method (default: GET)
-      --param string        Target parameter (required)
-      --position string     Parameter position: query, body, header
-
-Inference:
-      --samples int         Number of test samples (default: 50)
-      --min-confidence float Minimum confidence threshold (default: 0.6)
-  -t, --type string         Attack types to test (default: sqli,xss,cmdi,path_traversal)
-      --hints               Include evasion hints (default: true)
-
-Output:
-  -o, --output string       Output file
-  -f, --format string       Format: json, yaml, text
-```
-
-### Plugins Command
-
-Manage mutation plugins.
-
-```bash
-# List all loaded plugins
-burrito plugins list
-
-# Show plugin details
-burrito plugins info <plugin-name>
-
-# Show plugin directory
-burrito plugins dir
-```
-
-### Server Mode (Burp Integration)
-
-```bash
-burrito serve [flags]
-
-      --port int              Server port (default: 8089)
-      --host string           Host to bind (default: localhost)
-      --cors                  Enable CORS (default: true)
-      --auth-token string     Require auth token
-      --max-concurrent int    Max concurrent operations (default: 5)
-      --websocket             Enable WebSocket (default: true)
-```
-
-## Burp Suite Extension
-
-BypassBurrito includes a native Burp Suite Pro extension for seamless integration.
-
-### Building the Extension
-
-```bash
-cd burp-extension
-mvn clean package
-# Output: target/bypassburrito-burp-1.0.0.jar
-```
-
-### Installation
-
-1. Start the BypassBurrito server: `burrito serve`
-2. In Burp Suite: Extensions → Add → Select JAR file
-3. Configure server URL in the BypassBurrito tab
-
-### Features
-
-- Right-click "Send to BypassBurrito" on any request
-- Quick bypass options for SQLi, XSS, CMDi, Path Traversal
-- WAF detection from context menu
-- Real-time results in dedicated tab
-- Automatic Burp Scanner issue reporting
-
-See [burp-extension/README.md](burp-extension/README.md) for full documentation.
 
 ## Supported WAFs
 
-| WAF | Detection | Evasion Profile |
-|-----|-----------|-----------------|
-| Cloudflare | Yes | Yes |
-| ModSecurity | Yes | Yes |
-| AWS WAF | Yes | Yes |
-| Akamai | Yes | Yes |
-| Imperva/Incapsula | Yes | Yes |
-| F5 BIG-IP | Yes | Yes |
-| Sucuri | Yes | Yes |
-| Wordfence | Yes | Yes |
-| Fortinet | Yes | Yes |
-| Barracuda | Yes | Yes |
-| Citrix | Yes | Yes |
-| Palo Alto | Yes | Yes |
-| Radware | Yes | Yes |
+Cloudflare, ModSecurity, AWS WAF, Akamai, Imperva, F5 BIG-IP, Sucuri, Wordfence, Fortinet, Barracuda, Citrix, Palo Alto, Radware.
 
-## Supported Attack Types
+## Mutation strategies
 
-| Type | Description |
-|------|-------------|
-| `sqli` | SQL Injection (Union, Boolean Blind, Time Blind, Error-based) |
-| `xss` | Cross-Site Scripting (Reflected, Stored, DOM) |
-| `cmdi` | Command Injection (Unix, Windows) |
-| `path_traversal` | Path/Directory Traversal |
-| `ssti` | Server-Side Template Injection (Jinja2, Twig, Freemarker) |
-| `xxe` | XML External Entity |
-| `nosqli` | NoSQL Injection (MongoDB, CouchDB) |
+- **Encoding** — URL, Unicode, HTML entities, overlong UTF-8, mixed
+- **Obfuscation** — comment injection, case randomization, whitespace tricks
+- **Fragmentation** — payload splitting, chunked encoding, parameter pollution
+- **Polymorphic** — structurally different but semantically equivalent rewrites
+- **Contextual** — HTTP context-aware mutations (JSON, XML, form data)
+- **Adversarial ML** — homoglyphs, invisible characters, bidi overrides
+- **SSTI** — Jinja2, Twig, Freemarker template injection mutations
+- **NoSQL** — MongoDB/CouchDB operator obfuscation
 
-## Configuration
+## LLM providers
 
-Configuration file: `~/.bypassburrito.yaml`
-
-```yaml
-provider:
-  name: anthropic
-  model: claude-sonnet-4-20250514
-  temperature: 0.3
-
-http:
-  timeout: 30s
-  rate_limit: 5.0
-  proxy_url: ""
-  protocol:
-    prefer_http2: false
-    enable_websocket: true
-    chunked_evasion: true
-
-bypass:
-  max_iterations: 15
-  max_payloads: 30
-  detect_waf: true
-  use_learned: true
-  strategies:
-    enabled:
-      - encoding
-      - obfuscation
-      - fragmentation
-      - polymorphic
-      - contextual
-      - adversarial
-      - ssti
-      - nosql
-  oracle:
-    enabled: true
-    timing_threshold: 0.3
-    content_length_threshold: 0.1
-    baseline_samples: 5
-
-learning:
-  enabled: true
-  store_path: ~/.bypassburrito/learned-patterns.yaml
-  auto_save: true
-
-solver:
-  enabled: false
-  headless: true
-  captcha_service: ""  # "2captcha" or "anticaptcha"
-  max_attempts: 3
-
-sequence:
-  enabled: false
-  path: ~/.bypassburrito/sequences
-
-output:
-  format: text
-  color: true
-  show_all_attempts: false
-```
-
-## Examples
-
-### Basic SQLi Bypass
+Set one of these and go:
 
 ```bash
-burrito bypass -u "https://shop.example.com/product" \
-  --param id --type sqli
+export ANTHROPIC_API_KEY="..."   # Claude
+export OPENAI_API_KEY="..."      # GPT-4o
+export GROQ_API_KEY="..."        # Llama 3.1 70B
+# Or use --provider ollama for local models
 ```
 
-### XSS with Burp Proxy
+## Burp integration
 
-```bash
-burrito bypass -u "https://app.example.com/search" \
-  --param q --type xss \
-  --proxy http://127.0.0.1:8080 \
-  --show-all
-```
-
-### Deep WAF Analysis + Targeted Bypass
-
-```bash
-# First, analyze the WAF
-burrito detect -u "https://target.com" --deep -o waf-report.json
-
-# Then bypass with specific WAF type
-burrito bypass -u "https://target.com/api" \
-  --param query --type sqli \
-  --waf-type cloudflare \
-  --use-learned --evolve \
-  -f markdown -o report.md
-```
-
-### Generate Nuclei Templates
-
-```bash
-burrito bypass -u "https://target.com/vuln" \
-  --param input --type xss \
-  -f nuclei -o templates/
-```
-
-### Ensemble Mode (Multiple LLMs)
-
-```bash
-burrito bypass -u "https://critical-target.com/api" \
-  --param data --type sqli \
-  --ensemble \
-  --max-iterations 25
-```
-
-### Minimize Successful Bypasses
-
-```bash
-# Find bypass and minimize to shortest working form
-burrito bypass -u "https://target.com/api" \
-  --param id --type sqli \
-  --minimize
-```
-
-### Infer WAF Rules
-
-```bash
-# Discover what patterns the WAF is blocking
-burrito infer -u "https://target.com/api" \
-  --param id --samples 100 \
-  -f json -o rules.json
-
-# Focus on specific attack types
-burrito infer -u "https://target.com/api" \
-  --param id --type sqli,xss
-```
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        BypassBurrito v0.3.1                          │
-├─────────────────────────────────────────────────────────────────────┤
-│  CLI (Cobra)                                                        │
-│  ├── bypass     - Generate WAF bypasses                             │
-│  ├── detect     - WAF detection & fingerprinting                    │
-│  ├── infer      - WAF rule inference                                │
-│  ├── plugins    - Plugin management                                 │
-│  └── serve      - Server mode for Burp integration                  │
-├─────────────────────────────────────────────────────────────────────┤
-│  Core Engine                                                        │
-│  ├── LLM Providers    - Anthropic, OpenAI, Groq, Ollama, LM Studio │
-│  ├── WAF Detector     - Signature + behavioral analysis             │
-│  ├── Rule Inference   - Pattern and keyword detection               │
-│  ├── Mutation Engine  - 8 strategy types (incl. SSTI, NoSQL)        │
-│  ├── Response Oracle  - Timing, differential, fingerprint analysis  │
-│  ├── State Machine    - Multi-request attack sequences              │
-│  ├── Challenge Solver - JS/CAPTCHA solving (Cloudflare, etc.)       │
-│  ├── Protocol Evasion - HTTP/2, WebSocket, chunked encoding         │
-│  ├── Minimizer        - Delta debugging payload reduction           │
-│  ├── Plugin SDK       - Custom mutation plugins                     │
-│  ├── Learning System  - Pattern storage, ranking, evolution         │
-│  └── HTTP Client      - Rate limiting, retries, session management  │
-├─────────────────────────────────────────────────────────────────────┤
-│  Output                                                             │
-│  └── Reporters        - JSON, Markdown, HTML, Burp XML, Nuclei      │
-└─────────────────────────────────────────────────────────────────────┘
-                                    │
-                          REST API / WebSocket
-                                    │
-┌───────────────────────────────────┴───────────────────────────────┐
-│                    Burp Suite Pro Extension                        │
-│  ├── Context Menu    - Right-click integration                     │
-│  ├── Custom Tab      - Results, queue, configuration               │
-│  └── Issue Reporter  - Scanner findings                            │
-└────────────────────────────────────────────────────────────────────┘
-```
-
-## Cross-Tool Integration
-
-BypassBurrito participates in a cross-tool security pipeline:
-
-```
-Nubicustos (cloud) ──containers──> Cepheus (container escape)
-Reticustos (network) ──endpoints──> Indago (API fuzzing)
-Indago (API fuzzing) ──WAF-blocked──> BypassBurrito (WAF bypass)
-Ariadne (attack paths) ──endpoints──> Indago (API fuzzing)
-All tools ──findings──> Vinculum (correlation) ──export──> Ariadne (attack paths)
-```
-
-### Importing from Indago
-
-Import WAF-blocked findings from Indago for targeted bypass testing:
-
-```bash
-# Indago exports WAF-blocked endpoints
-indago scan --spec api.yaml --export-waf-blocked waf-blocked.json
-
-# BypassBurrito auto-detects attack types and generates bypasses
-burrito bypass --from-indago waf-blocked.json
-```
-
-### Exporting to Vinculum
-
-Export bypass results for correlation in Vinculum:
-
-```bash
-burrito bypass -u "https://target.com/api" --param id --type sqli -f json -o results.json
-vinculum ingest results.json --format ariadne --output correlated.json
-```
-
-See also: [Vinculum](https://github.com/Su1ph3r/vinculum) | [Nubicustos](https://github.com/Su1ph3r/Nubicustos) | [Reticustos](https://github.com/Su1ph3r/Reticustos) | [Indago](https://github.com/Su1ph3r/indago) | [Cepheus](https://github.com/Su1ph3r/Cepheus) | [Ariadne](https://github.com/Su1ph3r/ariadne)
-
-## Legal Disclaimer
-
-BypassBurrito is designed for **authorized security testing only**.
-
-- Only use on systems you have explicit permission to test
-- Obtain written authorization before testing
-- Follow responsible disclosure practices
-- Comply with all applicable laws and regulations
-
-The authors are not responsible for misuse of this tool.
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+Start the server with `burrito serve`, then load `burp-extension/target/bypassburrito-burp-1.0.0.jar` in Burp Suite Pro. Right-click any request and hit "Send to BypassBurrito" — results stream back in real time.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-- Inspired by various WAF bypass research and tools
-- Built with [Cobra](https://github.com/spf13/cobra) and [Viper](https://github.com/spf13/viper)
-- Burp extension uses the [Montoya API](https://portswigger.net/burp/documentation/desktop/extensions/creating)
+[MIT](LICENSE)
